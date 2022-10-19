@@ -23,7 +23,7 @@ inputs:
       prefix: -g
       position: 3
   aaf_bin:
-    type: int
+    type: float
     inputBinding:
       prefix: -a
       position: 4
