@@ -1,4 +1,5 @@
 FROM cgap/cgap-ubuntu2004-py-38:0.0.1
+MAINTAINER Alexander Veit (alexander_veit@hms.harvard.edu)
 
 #######################################################################
 #     Setting working env
@@ -26,20 +27,26 @@ RUN pip install cgap-higlass-data granite-suite
 
 RUN conda clean -a -y -f
 
+
+
+#######################################################################
+#     Setting env variables
+#######################################################################
+
+## Supporting UTF-8
+RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"
+ENV LC_ALL=en_US.UTF-8
+
+#######################################################################
+#     Scripts
+#######################################################################
+
 COPY create_higlass_gene_file.py .
 COPY create_higlass_variant_file.py .
 COPY create_mask_files.py .
 COPY create_phenotype.py .
 COPY run_regenie.sh .
 RUN chmod +x run_regenie.sh
-COPY run_regenie_wrapper.sh .
-RUN chmod +x run_regenie_wrapper.sh
 
-#######################################################################
-#     Setting env variables
-#######################################################################
-## Supporting UTF-8
-RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"
-ENV LC_ALL=en_US.UTF-8
-
-CMD ["bash"]
+# default command
+CMD ["run_regenie.sh"]

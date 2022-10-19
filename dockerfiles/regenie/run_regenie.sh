@@ -9,7 +9,6 @@ echoerr() {
 printHelpAndExit() {
     echo "Usage: ${0##*/} -v VCF -t VCF_TBI -c CASES -e EXCLUDED_GENES -g GENE_ANNOTATIONS -b VC_TESTS -a AAF_BIN"
     echo "-v VCF : path to VEP annotated VCF (gzipped)"
-    echo "-t VCF_TBI : path to VEP annotated VCF index file"
     echo "-c CASES : comma separated list of sample IDs that are affected"
     echo "-a AAF_BIN : specifies the AAF upper bound used to generate burden masks"
     echo "-b VC_TESTS : gene-based tests to use"
@@ -19,8 +18,9 @@ printHelpAndExit() {
 }
 while getopts "v:t:c:g:a:b:e:" opt; do
     case $opt in
-        v) annotated_vcf=$OPTARG;;
-        t) annotated_vcf_tbi=$OPTARG;;
+        v) annotated_vcf="$OPTARG"
+           annotated_vcf_tbi="$OPTARG.tbi"
+        ;;
         c) cases=$OPTARG;;
         g) gene_annotations=$OPTARG;;
         a) aaf_bin=$OPTARG;;
