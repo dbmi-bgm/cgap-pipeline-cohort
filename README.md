@@ -1,4 +1,4 @@
-# UNDER ACTIVE DEVELOPEMENT
+# UNDER ACTIVE DEVELOPMENT
 
 # cgap-pipeline-cohort
 
