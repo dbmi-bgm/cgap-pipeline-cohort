@@ -106,7 +106,7 @@ def main(regenie_output, gene_info, aaf_bin, out):
                     continue
                 if aaf_bin != "1" and (not regenie_id.endswith(aaf_bin)):
                     continue
-            else:
+            else: # all other tests only consider all variants in the mask
                 if not regenie_id.endswith("all"):
                     continue
 

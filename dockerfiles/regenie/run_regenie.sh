@@ -7,7 +7,7 @@ echoerr() {
 }
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -v VCF -t VCF_TBI -c CASES -e EXCLUDED_GENES -g GENE_ANNOTATIONS -b VC_TESTS -a AAF_BIN"
+    echo "Usage: ${0##*/} -v VCF -c CASES -e EXCLUDED_GENES -g GENE_ANNOTATIONS -b VC_TESTS -a AAF_BIN"
     echo "-v VCF : path to VEP annotated VCF (gzipped)"
     echo "-c CASES : comma separated list of sample IDs that are affected"
     echo "-a AAF_BIN : specifies the AAF upper bound used to generate burden masks"
@@ -16,7 +16,7 @@ printHelpAndExit() {
     echo "-g GENE_ANNOTATIONS : gene annotation file from portal"
     exit "$1"
 }
-while getopts "v:t:c:g:a:b:e:" opt; do
+while getopts "v:c:g:a:b:e:" opt; do
     case $opt in
         v) annotated_vcf="$OPTARG"
            annotated_vcf_tbi="$OPTARG.tbi"
@@ -66,20 +66,29 @@ then
     echoerr "AAF_BIN missing"
 fi
 
+if [ -z "$vc_tests" ]
+then
+    echoerr "Gene-based tests missing. The following are supported: burden,skat,skato,skato-acat,acatv,acato,acato-full."
+fi
+
 if [ "$vc_tests" = "burden" ]
 then
     vc_tests=""
 fi
 
+#SCRIPT_LOCATION="/usr/local/bin" # To use in prod
+SCRIPT_LOCATION="/Users/alexandervelt/Documents/GitHub/cgap-pipeline-cohort/dockerfiles/regenie" # To use in prod
+
 # Remove chrM - regenie does not work with it
 echo ""
 echo "== Removing unsupported chromosomes =="
-bcftools filter "$annotated_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY -O z > tmp.no_chrM.vcf.gz || exit 1
+#bcftools filter "$annotated_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY -O z > tmp.no_chrM.vcf.gz || exit 1
+bcftools filter "$annotated_vcf" -r chr1 -O z > tmp.no_chrM.vcf.gz || exit 1
 bcftools index -t tmp.no_chrM.vcf.gz || exit 1
 
 # Assign an ID to each variants - existing IDs will be overwritten as these can contain duplicate IDs
 echo ""
-echo "== Assigning and ID to each variant =="
+echo "== Assigning unique ID to each variant =="
 bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' tmp.no_chrM.vcf.gz > tmp.no_chrM.id.vcf || exit 1
 
 # Perform variant and sample filtering
@@ -91,17 +100,25 @@ vcftools --vcf tmp.no_chrM.id.vcf \
          --out tmp.no_chrM.id.filtered \
          --hwe 0.001 \
          --max-missing 0.9 \
-         --maf 0.05 \
+         --min-alleles 2 \
+         --max-alleles 2 \
+         --minQ 90 \
+         --minDP 10 \
          --mac 1 || exit 1
-rm -f tmp.no_chrM.id.vcf
-bgzip -c tmp.no_chrM.id.filtered.recode.vcf > tmp.no_chrM.id.filtered.recode.vcf.gz || exit 1
-tabix -p vcf tmp.no_chrM.id.filtered.recode.vcf.gz || exit 1
-mv tmp.no_chrM.id.filtered.recode.vcf regenie_input_source.vcf
+
+echo ""
+echo "== Apply GATK best practice filter =="
+python "$SCRIPT_LOCATION"/apply_gatk_filter.py -a tmp.no_chrM.id.filtered.recode.vcf -o tmp.no_chrM.id.filtered.recode.gatk.vcf || exit 1
+
+bgzip -c tmp.no_chrM.id.filtered.recode.gatk.vcf > tmp.no_chrM.id.filtered.recode.gatk.vcf.gz || exit 1
+tabix -p vcf tmp.no_chrM.id.filtered.recode.gatk.vcf.gz || exit 1
+mv tmp.no_chrM.id.filtered.recode.gatk.vcf regenie_input_source.vcf
+
 
 # Create BGEN for input to regenie
 echo ""
 echo "== Create BGEN file with index =="
-plink2 --export bgen-1.2 'bits=8' --out regenie_input --vcf tmp.no_chrM.id.filtered.recode.vcf.gz || exit 1
+plink2 --export bgen-1.2 'bits=8' --out regenie_input --vcf tmp.no_chrM.id.filtered.recode.gatk.vcf.gz || exit 1
 
 # Create BGEN index
 bgenix -g regenie_input.bgen -index -clobber || exit 1
@@ -110,16 +127,16 @@ bgenix -g regenie_input.bgen -index -clobber || exit 1
 rm -f tmp*
 
 # Create the phenotype file
-# This will create the file 'regenie_input.phenotype'
+# This will create the file 'regenie_input.phenotype'. The sample file is created together with the bgen file.
 echo ""
 echo "== Create phenotype file =="
-python create_phenotype.py  -s regenie_input.sample -o regenie_input.phenotype -c "$cases" || exit 1
+python "$SCRIPT_LOCATION"/create_phenotype.py -s regenie_input.sample -o regenie_input.phenotype -c "$cases" || exit 1
 
 # Create files for gene-level testing
 # This will create the files 'regenie_input.annotation', 'regenie_input.set_list', 'regenie_input.masks'
 echo ""
 echo "== Create mask files =="
-python create_mask_files.py -a regenie_input_source.vcf || exit 1
+python "$SCRIPT_LOCATION"/create_mask_files.py -a regenie_input_source.vcf || exit 1
 
 echo ""
 echo "== Regenie step 1 =="
@@ -145,18 +162,22 @@ regenie --step 2 \
         --out regenie_result_step2_variant || exit 1
 
 echo ""
-echo "== Create variant level Higlass file =="
-python create_higlass_variant_file.py -r regenie_result_step2_variant_Y1.regenie \
+echo "== Create variant level result file and Higlass VCF =="
+
+python "$SCRIPT_LOCATION"/create_variant_result_file.py -r regenie_result_step2_variant_Y1.regenie \
                                       -a regenie_input_source.vcf \
-                                      -o higlass_variant_tests.vcf || exit 1
+                                      -c "$cases" \
+                                      -o variant_level_results.txt \
+                                      -e higlass_variant_tests.vcf || exit 1
+
 
 echo ""
-echo "== Create multilevel version of this file =="
+echo "== Create multilevel version of the Higlass VCF =="
 # This needs "pip install cgap-higlass-data"
 cat higlass_variant_tests.vcf | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > higlass_variant_tests.sorted.vcf
 create-cohort-vcf -i higlass_variant_tests.sorted.vcf \
                   -o higlass_variant_tests.multires.vcf \
-                  -c regenie_log10p \
+                  -c fisher_ml10p_control \
                   -q True || exit 1
 cat higlass_variant_tests.multires.vcf | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > higlass_variant_tests.multires.sorted.vcf || exit 1
 bgzip -c higlass_variant_tests.multires.sorted.vcf > higlass_variant_tests.multires.vcf.gz || exit 1
@@ -196,10 +217,11 @@ else
   cp "$gene_annotations" gene_annotations.json
 fi
 
-python create_higlass_gene_file.py -r regenie_result_step2_gene_Y1.regenie \
+python "$SCRIPT_LOCATION"/create_higlass_gene_file.py -r regenie_result_step2_gene_Y1.regenie \
                                    -g gene_annotations.json \
                                    -a "$aaf_bin" \
                                    -o higlass_gene_tests.vcf || exit 1
+
 cat higlass_gene_tests.vcf | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > higlass_gene_tests.sorted.vcf || exit 1
 bgzip -c higlass_gene_tests.sorted.vcf > higlass_gene_tests.sorted.vcf.gz || exit 1
 tabix -p vcf higlass_gene_tests.sorted.vcf.gz || exit 1

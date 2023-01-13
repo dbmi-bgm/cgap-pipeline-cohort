@@ -38,11 +38,11 @@ inputs:
       prefix: -e
       position: 6
 outputs:
-  regenie_variant_result:
+  variant_level_results:
     type: File
     outputBinding:
-      glob: regenie_result_step2_variant_Y1.regenie
-  regenie_gene_result:
+      glob: variant_level_results.txt
+  regenie_gene_results:
     type: File
     outputBinding:
       glob: regenie_result_step2_gene_Y1.regenie
@@ -60,6 +60,6 @@ outputs:
       - .tbi
 
 hints:
-  - dockerPull: aveit/cgap-regenie:0.1.0
+  - dockerPull: aveit/cgap-regenie:0.1.1
     class: DockerRequirement
 class: CommandLineTool

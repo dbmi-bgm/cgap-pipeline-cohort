@@ -7,7 +7,6 @@ import click
 @click.option("-o", "--output", required=True, type=str, help="File name of phenotype file")
 def main(sample_file, cases, output):
     """This script takes a BGEN sample file and produces a phenotype file for use in regenie. 
-    Case/Control values are assigned arbitrarily to each sample.
 
     Example usage: 
 
