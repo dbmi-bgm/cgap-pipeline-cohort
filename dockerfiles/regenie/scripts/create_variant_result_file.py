@@ -4,9 +4,10 @@
 
 import click
 from granite.lib import vcf_parser
+from granite.lib.shared_vars import DStags
 import math
 from scipy.stats import fisher_exact
-from utils import get_worst_consequence, get_worst_transcript
+from utils import get_worst_consequence, get_worst_transcript, clean_dbnsfp, get_maxds
 
 
 ################################################
@@ -24,6 +25,15 @@ SIGNIFICANT_DIGITS = 3
 #significant digits when calculated above 1
 # e.g., OR and log10
 ROUND_DIGITS = 4
+
+dbNSFP_fields = {
+    # dbNSFP fields that may be a list
+    # and need to be assigned to transcripts
+    'Polyphen2_HVAR_pred': 0,
+    'Polyphen2_HVAR_score': 0,
+    'SIFT_pred': 0,
+    'SIFT_score': 0
+}
 
 
 ################################################
@@ -153,10 +163,40 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
     """
 
     vcf_obj = vcf_parser.Vcf(annotated_vcf)
+
+    # Get annotation indices
+    idx_transcript = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'Ensembl_transcriptid')
     idx_consequence = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'Consequence')
     idx_canonical = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'CANONICAL')
     idx_impact = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'IMPACT')
-    idx_cadd = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'CADD_PHRED')
+    idx_cadd_phred = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'CADD_PHRED') 
+    idx_cadd_rs = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'CADD_raw_rankscore')
+    idx_enst = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'Feature')
+
+    idx_polyphen_pred = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'Polyphen2_HVAR_pred')
+    idx_polyphen_rankscore = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'Polyphen2_HVAR_rankscore')
+    idx_polyphen_score = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'Polyphen2_HVAR_score')
+
+    idx_gerp_score = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'GERP++_RS')
+    idx_gerp_rankscore = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'GERP++_RS_rankscore')
+
+    idx_sift_rankscore = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'SIFT_converted_rankscore')
+    idx_sift_pred = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'SIFT_pred')
+    idx_sift_score = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'SIFT_score')
+
+    # idx_spliceai_ds_ag = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'SpliceAI_pred_DS_AG')
+    # idx_spliceai_ds_al = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'SpliceAI_pred_DS_AL')
+    # idx_spliceai_ds_dg = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'SpliceAI_pred_DS_DG')
+    # idx_spliceai_ds_dl = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'SpliceAI_pred_DS_DL')
+    # Get SpliceAI ds indexes
+    # DStags import from granite.shared_vars
+    SpAItag_list, SpAI_idx_list = [], []
+    for DStag in DStags:
+        tag, idx = vcf_obj.header.check_tag_definition(DStag)
+        SpAItag_list.append(tag)
+        SpAI_idx_list.append(idx)
+    #end for
+
 
     # We want gnomAD v2 and v3 allele frequencies etc. to computer Fisher exact test scores
     idx_gnomADg_AC = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'gnomADg_AC')
@@ -176,16 +216,53 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
         
     variant_infos = {}
 
+    # Get VEP indexes
+    # Indexes to resolve dbNSFP values by transcript
+    for field in dbNSFP_fields:
+        dbNSFP_fields[field] = vcf_obj.header.get_tag_field_idx(VEP_TAG, field)
+    #end for
+    
+
     for record in vcf_obj.parse_variants():
         id = record.ID
         # Retrieve annotations and allele counts
         try: 
-            vep_tag_value = record.get_tag_value(VEP_TAG)
-            worst_transcript = get_worst_transcript(vep_tag_value, idx_canonical, idx_consequence)
+            #vep_tag_value = record.get_tag_value(VEP_TAG)
+
+             # Clean dbNSFP by resolving values by transcript
+            VEP_clean = clean_dbnsfp(record, VEP_TAG, dbNSFP_fields, idx_transcript, idx_enst)
+            if not VEP_clean: continue
+
+            worst_transcript = get_worst_transcript(VEP_clean, idx_canonical, idx_consequence)
             worst_transcript_ = worst_transcript.split('|')
             worst_consequence = get_worst_consequence(worst_transcript_[idx_consequence])
             impact = worst_transcript_[idx_impact]
-            cadd = worst_transcript_[idx_cadd]
+            transcript_id = worst_transcript_[idx_enst]
+
+            cadd_phred = worst_transcript_[idx_cadd_phred]
+            cadd_raw_rs = worst_transcript_[idx_cadd_rs]
+
+            polyphen_pred = worst_transcript_[idx_polyphen_pred]
+            polyphen_rankscore = worst_transcript_[idx_polyphen_rankscore]
+            polyphen_score = worst_transcript_[idx_polyphen_score]
+
+            gerp_score = worst_transcript_[idx_gerp_score]
+            gerp_rankscore = worst_transcript_[idx_gerp_rankscore]
+
+            sift_rankscore = worst_transcript_[idx_sift_rankscore]
+            sift_pred = worst_transcript_[idx_sift_pred]
+            sift_score = worst_transcript_[idx_sift_score]
+
+            # spliceai_ds_ag = worst_transcript_[idx_spliceai_ds_ag]
+            # spliceai_ds_al = worst_transcript_[idx_spliceai_ds_al]
+            # spliceai_ds_dg = worst_transcript_[idx_spliceai_ds_dg]
+            # spliceai_ds_dl = worst_transcript_[idx_spliceai_ds_dl]
+            # spliceai_score_max = max([spliceai_ds_ag,spliceai_ds_al,spliceai_ds_dg,spliceai_ds_dl])
+            # Get max SpliceAI max_ds
+            spliceai_score_max = get_maxds(record, SpAItag_list, SpAI_idx_list)
+            spliceai_score_max = spliceai_score_max if spliceai_score_max else ''
+
+            
             gnomADg_AC = worst_transcript_[idx_gnomADg_AC]
             gnomADg_AN = worst_transcript_[idx_gnomADg_AN]
             gnomADg_AF = worst_transcript_[idx_gnomADg_AF]
@@ -217,9 +294,9 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
             fisher_p_control, fisher_or_control, fisher_ml10p_control = fisher_calculation(case_AC, case_AN-case_AC, control_AC, control_AN-control_AC) 
 
             variant_infos[id] = {
+                "transcript": transcript_id,
                 "most_severe_consequence": worst_consequence,
                 "level_most_severe_consequence": impact,
-                "cadd_phred": cadd,
                 "case_AC": case_AC,
                 "case_AN": case_AN,
                 "case_N": int(case_AN/2),
@@ -227,7 +304,20 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
                 "control_AC": control_AC,
                 "control_AN": control_AN,
                 "control_N": int(control_AN/2),
-                "control_AF": control_sample_gt_summarized["AF"],
+                "control_AF": control_sample_gt_summarized["AF"],  
+                                                                                            
+                "cadd_raw_rs": cadd_raw_rs,
+                "cadd_phred": cadd_phred,
+                "polyphen_pred": polyphen_pred,
+                "polyphen_rankscore": polyphen_rankscore,
+                "polyphen_score": polyphen_score,
+                "gerp_score": gerp_score,
+                "gerp_rankscore": gerp_rankscore,
+                "sift_rankscore": sift_rankscore,
+                "sift_pred": sift_pred,
+                "sift_score": sift_score,
+                "spliceai_score_max": spliceai_score_max,
+
                 "gnomADg_AC": gnomADg_AC,
                 "gnomADg_AN": gnomADg_AN,
                 "gnomADg_AF": gnomADg_AF,
@@ -243,8 +333,12 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
                 "fisher_p_control": fisher_p_control,
                 "fisher_or_control": fisher_or_control,
                 "fisher_ml10p_control": fisher_ml10p_control,
-
             }
+
+            for key in variant_infos[id]:
+                if variant_infos[id][key] == '':
+                    variant_infos[id][key] = 'NA'
+
         except Exception: 
             raise ValueError('\nERROR processing variant_infos for variant {0}\n'.format(id))
 
@@ -271,13 +365,9 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
     }
 
     info_list = [
-        "case_AC", "case_AN", "case_AF", "control_AC", "control_AN", "control_AF", "gnomADg_AC", "gnomADg_AN", "gnomADg_AF", 
-        "gnomADe2_AC", "gnomADe2_AN", "gnomADe2_AF", "most_severe_consequence", "level_most_severe_consequence", "cadd_phred",
-        "fisher_or_gnomADg", "fisher_ml10p_gnomADg", "fisher_or_gnomADe2", "fisher_ml10p_gnomADe2", "fisher_or_control", 
-        "fisher_ml10p_control", "regenie_ml10p", "regenie_beta", "regenie_chisq", "regenie_se",
+         "transcript", "case_AC", "case_AN", "case_AF", "control_AC", "control_AN", "control_AF", "gnomADg_AC", "gnomADg_AN", "gnomADg_AF", "gnomADe2_AC", "gnomADe2_AN", "gnomADe2_AF", "most_severe_consequence", "level_most_severe_consequence", "cadd_raw_rs", "cadd_phred", "polyphen_pred", "polyphen_rankscore", "polyphen_score", "gerp_score", "gerp_rankscore", "sift_rankscore", "sift_pred", "sift_score", "spliceai_score_max", "fisher_or_gnomADg", "fisher_ml10p_gnomADg", "fisher_or_gnomADe2", "fisher_ml10p_gnomADe2", "fisher_or_control", "fisher_ml10p_control", "regenie_ml10p", "regenie_beta", "regenie_chisq", "regenie_se",
     ]
 
-    
     with open(regenie_output, 'r') as f_in, open(out, 'w') as f_out, open(higlass_vcf, 'w') as f_out_hg:
         header = '# CHROM: chromosome\n'
         header += '# GENPOS: position with in the chromosome\n'
@@ -295,11 +385,24 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
         header += '# CASE_N: number of affected samples\n'
         header += '# CONTROL_AF: control allele frequency\n'
         header += '# CONTROL_N: number of control samples\n'
+        header += '# F_LOG10P_CONTROL: -log10(p) of a Fisher exact test with cases vs. control\n'
+        header += '# F_OR_CONTROL: odds ratio of a Fisher exact test with cases vs. control\n'
         header += '# F_LOG10P_GNOMADG: -log10(p) of a Fisher exact test when gnomAD 3 is used as control group\n'
         header += '# F_OR_GNOMADG: odds ratio of a Fisher exact test when gnomAD 3 is used as control group\n'
         header += '# F_LOG10P_GNOMADE2: -log10(p) of a Fisher exact test when gnomAD 2 is used as control group\n'
         header += '# F_OR_GNOMADE2: odds ratio of a Fisher exact test when gnomAD 2 is used as control group\n'
-        header += 'CHROM GENPOS ID ALLELE0 ALLELE1 A1FREQ N R_TEST R_BETA R_SE R_CHISQ R_LOG10P CASE_AF CASE_N CONTROL_AF CONTROL_N F_LOG10P_GNOMADG F_OR_GNOMADG F_LOG10P_GNOMADE2 F_OR_GNOMADE2\n'
+        header += '# CADD_RAW_RS: CADD rankscore\n'
+        header += '# CADD_PHRED: CADD Phred score\n'
+        header += '# POLYPHEN_PRED: PolyPhen 2 prediction\n'
+        header += '# POLYPHEN_RANKSCORE: PolyPhen 2 rankscore\n'
+        header += '# POLYPHEN_SCORE: PolyPhen 2 score\n'
+        header += '# GERP_SCORE: Gerp++ score\n'
+        header += '# GERP_RANKSCORE: Gerp++ rankscore\n'
+        header += '# SIFT_RANKSCORE: SIFT rankscore\n'
+        header += '# SIFT_PRED: SIFT prediction\n'
+        header += '# SIFT_SCORE: SIFT score\n'
+        header += '# SPLICEAI_MAX_SCORE: SpliceAI predicts whether a variant causes a splice acceptor gain or loss, or a splice donor gain or loss. The score shown here is the max score of these four scores\n'
+        header += 'CHROM GENPOS ID ALLELE0 ALLELE1 A1FREQ N R_TEST R_BETA R_SE R_CHISQ R_LOG10P CASE_AF CASE_N CONTROL_AF CONTROL_N F_LOG10P_CONTROL F_OR_CONTROL F_LOG10P_GNOMADG F_OR_GNOMADG F_LOG10P_GNOMADE2 F_OR_GNOMADE2 CADD_RAW_RS CADD_PHRED POLYPHEN_PRED POLYPHEN_RANKSCORE POLYPHEN_SCORE GERP_SCORE GERP_RANKSCORE SIFT_RANKSCORE SIFT_PRED SIFT_SCORE SPLICEAI_MAX_SCORE\n'
         f_out.write(header)
 
         f_out_hg.write('##fileformat=VCFv4.3\n')
@@ -332,18 +435,16 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
             variant_infos[id]["regenie_chisq"] = r_chisq
             variant_infos[id]["regenie_se"] = r_se
             vi = variant_infos[id]
-    
-            l = f"{chr} {pos} {id} {ref} {alt} {freq} {samples} {r_test} {r_beta} {r_se} {r_chisq} {r_log10p} {vi['case_AF']} {vi['case_N']} {vi['control_AF']} {vi['control_N']} {vi['fisher_ml10p_gnomADg']} {vi['fisher_or_gnomADg']} {vi['fisher_ml10p_gnomADe2']} {vi['fisher_or_gnomADe2']}"
+
+            l = f"{chr} {pos} {id} {ref} {alt} {freq} {samples} {r_test} {r_beta} {r_se} {r_chisq} {r_log10p} {vi['case_AF']} {vi['case_N']} {vi['control_AF']} {vi['control_N']} {vi['fisher_ml10p_control']} {vi['fisher_or_control']}  {vi['fisher_ml10p_gnomADg']} {vi['fisher_or_gnomADg']} {vi['fisher_ml10p_gnomADe2']} {vi['fisher_or_gnomADe2']} {vi['cadd_raw_rs']} {vi['cadd_phred']} {vi['polyphen_pred']} {vi['polyphen_rankscore']} {vi['polyphen_score']} {vi['gerp_score']} {vi['gerp_rankscore']} {vi['sift_rankscore']} {vi['sift_pred']} {vi['sift_score']} {vi['spliceai_score_max']}"
             f_out.write(f"{l}\n")
             
 
             info = ""
             for field in info_list:
-                info+=field+"="
-                if vi[field] == '':
-                    info+="NA;"
-                else:
-                    info+=str(vi[field])+";"
+                if vi[field] == 'NA':
+                    continue
+                info+=field+"="+str(vi[field])+";"
             info = info.strip(";")
             
             f_out_hg.write(f"{chr}\t{pos}\t{id}\t{ref}\t{alt}\t0\tPASS\t{info}\n")

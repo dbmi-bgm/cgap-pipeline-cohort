@@ -60,6 +60,6 @@ outputs:
       - .tbi
 
 hints:
-  - dockerPull: aveit/cgap-regenie:0.1.1
+  - dockerPull: ACCOUNT/regenie:VERSION #aveit/cgap-regenie:0.1.1
     class: DockerRequirement
 class: CommandLineTool

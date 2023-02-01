@@ -1,0 +1,10 @@
+################################################################
+# Gene inserts / annotations
+################################################################
+name: cgap_genes
+description: Genes supported by CGAP. |
+             Build hg38/GRCh38.
+format: tsv_gz
+version: 0.4.6
+uuid: 335f7c0f-640e-44b9-a0da-bbe2728f782c
+accession: GAPFI6BQNY5O

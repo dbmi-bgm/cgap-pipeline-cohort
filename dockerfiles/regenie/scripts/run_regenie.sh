@@ -76,14 +76,14 @@ then
     vc_tests=""
 fi
 
-#SCRIPT_LOCATION="/usr/local/bin" # To use in prod
-SCRIPT_LOCATION="/Users/alexandervelt/Documents/GitHub/cgap-pipeline-cohort/dockerfiles/regenie" # To use in prod
+SCRIPT_LOCATION="/usr/local/bin" # To use in prod
+#SCRIPT_LOCATION="/Users/alexandervelt/Documents/GitHub/cgap-pipeline-cohort/dockerfiles/regenie/scripts" # To use in prod
 
 # Remove chrM - regenie does not work with it
 echo ""
 echo "== Removing unsupported chromosomes =="
-#bcftools filter "$annotated_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY -O z > tmp.no_chrM.vcf.gz || exit 1
-bcftools filter "$annotated_vcf" -r chr1 -O z > tmp.no_chrM.vcf.gz || exit 1
+bcftools filter "$annotated_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY -O z > tmp.no_chrM.vcf.gz || exit 1
+#bcftools filter "$annotated_vcf" -r chr1 -O z > tmp.no_chrM.vcf.gz || exit 1
 bcftools index -t tmp.no_chrM.vcf.gz || exit 1
 
 # Assign an ID to each variants - existing IDs will be overwritten as these can contain duplicate IDs
@@ -170,7 +170,6 @@ python "$SCRIPT_LOCATION"/create_variant_result_file.py -r regenie_result_step2_
                                       -o variant_level_results.txt \
                                       -e higlass_variant_tests.vcf || exit 1
 
-
 echo ""
 echo "== Create multilevel version of the Higlass VCF =="
 # This needs "pip install cgap-higlass-data"
@@ -199,10 +198,14 @@ regenie --step 2 \
         --minMAC 0.5 \
         --pred regenie_result_step1_pred.list \
         --check-burden-files \
+        --strict-check-burden \
         --verbose \
         --aaf-bins "$aaf_bin" \
+        --vc-maxAAF "$aaf_bin" \
         --exclude-setlist "$excluded_genes" \
         --out regenie_result_step2_gene \
+        --write-mask-snplist \
+        --write-mask \
         --vc-tests "$vc_tests" || exit 1
 
 
@@ -212,13 +215,14 @@ echo "== Create gene level Higlass file =="
 
 # Extract gene annotations if necessary
 if file --mime-type "$gene_annotations" | grep -q gzip$; then
-  gunzip -c "$gene_annotations" > gene_annotations.json
+  gunzip -c "$gene_annotations" > gene_annotations.tsv
 else
-  cp "$gene_annotations" gene_annotations.json
+  cp "$gene_annotations" gene_annotations.tsv
 fi
 
 python "$SCRIPT_LOCATION"/create_higlass_gene_file.py -r regenie_result_step2_gene_Y1.regenie \
-                                   -g gene_annotations.json \
+                                   -g gene_annotations.tsv \
+                                   -s regenie_result_step2_gene_masks.snplist \
                                    -a "$aaf_bin" \
                                    -o higlass_gene_tests.vcf || exit 1
 

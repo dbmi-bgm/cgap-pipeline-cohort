@@ -1,0 +1,113 @@
+## Pipeline information #####################################
+#     General information for the pipeline
+#############################################################
+name: Cohort_analysis
+description: Perform cohort analysis using Regenie
+
+## General arguments ########################################
+#     Pipeline input, reference files, and general arguments
+#       define all arguments for the pipeline here
+#############################################################
+input:
+
+  # File arguments
+  annotated_vcf:
+    argument_type: file.vcf_gz
+    dimensionality: 1
+
+  gene_annotations:
+    argument_type: file.tsv_gz
+    files:
+      - cgap_genes@0.4.6
+
+  # Parameters
+  cases:
+    argument_type: parameter.string
+
+  aaf_bin:
+    argument_type: parameter.float
+
+  vc_tests:
+    argument_type: parameter.string
+
+  excluded_genes:
+    argument_type: parameter.string
+
+
+## Workflows and dependencies ###############################
+#     Information for the workflows and their dependencies
+#############################################################
+workflows:
+
+  ## Workflow definition #####################
+  #   regenie_fisher
+  ############################################
+  regenie_fisher:
+
+    ## Workflow arguments ##############
+    ####################################
+    input:
+
+      # File arguments
+      annotated_vcf:
+        argument_type: file.vcf_gz
+        input_dimension: 1
+
+      gene_annotations:
+        argument_type: file.tsv_gz
+
+      cases:
+        argument_type: parameter.string
+
+      aaf_bin:
+        argument_type: parameter.float
+        value: "0.01"
+
+      vc_tests:
+        argument_type: parameter.string
+        value: "skato,acato-full"
+
+      excluded_genes:
+        argument_type: parameter.string
+
+
+    ## Output ##########################
+    ####################################
+    output:
+
+      # File output
+      variant_level_results:
+        file_type: Cohort variant results
+        # linkto_location:
+        #   - SampleProcessing
+
+      regenie_gene_results:
+        file_type: Regenie gene results
+        # linkto_location:
+        #   - SampleProcessing
+
+      higlass_variant_result:
+        file_type: Cohort variant results
+        higlass_file: True
+        # linkto_location:
+        #   - SampleProcessing
+
+      higlass_gene_result:
+        file_type: Cohort gene results
+        higlass_file: True
+        # linkto_location:
+        #   - SampleProcessing
+
+
+    ## EC2 Configuration to use ########
+    ####################################
+    config:
+        instance_type:
+          - c5.4xlarge
+        ebs_size: 1.0x
+        EBS_optimized: True
+        spot_instance: False
+        run_name: run_cohort_analysis
+        behavior_on_capacity_limit: wait_and_retry
+
+  

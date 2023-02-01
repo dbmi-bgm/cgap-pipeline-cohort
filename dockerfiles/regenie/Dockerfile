@@ -41,13 +41,13 @@ ENV LC_ALL=en_US.UTF-8
 #     Scripts
 #######################################################################
 
-COPY utils.py .
-COPY apply_gatk_filter.py .
-COPY create_higlass_gene_file.py .
-COPY create_variant_result_file.py .
-COPY create_mask_files.py .
-COPY create_phenotype.py .
-COPY run_regenie.sh .
+COPY scripts/utils.py .
+COPY scripts/apply_gatk_filter.py .
+COPY scripts/create_higlass_gene_file.py .
+COPY scripts/create_variant_result_file.py .
+COPY scripts/create_mask_files.py .
+COPY scripts/create_phenotype.py .
+COPY scripts/run_regenie.sh .
 RUN chmod +x run_regenie.sh
 
 # default command
