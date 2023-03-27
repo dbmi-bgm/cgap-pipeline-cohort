@@ -77,7 +77,7 @@ then
 fi
 
 SCRIPT_LOCATION="/usr/local/bin" # To use in prod
-#SCRIPT_LOCATION="/Users/alexandervelt/Documents/GitHub/cgap-pipeline-cohort/dockerfiles/regenie/scripts" # To use in prod
+#SCRIPT_LOCATION="/Users/alexandervelt/Documents/GitHub/cgap-pipeline-cohort/dockerfiles/regenie/scripts" # To use locally
 
 # Remove chrM - regenie does not work with it
 echo ""
@@ -92,6 +92,7 @@ echo "== Assigning unique ID to each variant =="
 bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' tmp.no_chrM.vcf.gz > tmp.no_chrM.id.vcf || exit 1
 
 # Perform variant and sample filtering
+
 echo ""
 echo "== Perform variant filtering =="
 vcftools --vcf tmp.no_chrM.id.vcf \
@@ -105,6 +106,7 @@ vcftools --vcf tmp.no_chrM.id.vcf \
          --minQ 90 \
          --minDP 10 \
          --mac 1 || exit 1
+
 
 echo ""
 echo "== Apply GATK best practice filter =="

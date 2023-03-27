@@ -16,14 +16,14 @@ RUN apt-get update && apt-get install -y libzstd-dev \
 RUN ln -s /usr/bin/python3.8 /usr/bin/python
 
 RUN conda install -c bioconda  -c conda-forge \
-    regenie=3.2.4 \
+    regenie=3.2.5 \
     plink2 \
     vcftools \
     bcftools \
     bgenix \
     click
 
-RUN pip install cgap-higlass-data granite-suite scipy
+RUN pip install cgap-higlass-data granite-suite==0.2.0 scipy
 
 RUN conda clean -a -y -f
 

@@ -333,7 +333,15 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
                 "fisher_p_control": fisher_p_control,
                 "fisher_or_control": fisher_or_control,
                 "fisher_ml10p_control": fisher_ml10p_control,
+
+                # Placeholder for Regenie results
+                "regenie_ml10p" : '',
+                "regenie_beta" : '',
+                "regenie_chisq" : '',
+                "regenie_se" : '',
+                "regenie_test": '',
             }
+
 
             for key in variant_infos[id]:
                 if variant_infos[id][key] == '':
@@ -364,18 +372,42 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
         "EXTRA": 13,
     }
 
+    # Add Regenie results to the variant_infos
+    with open(regenie_output, 'r') as f_in:
+       
+        for line in f_in:
+            if line.startswith("##") or line.startswith("CHROM"):
+                continue
+
+            # Example line
+            # CHROM GENPOS ID ALLELE0 ALLELE1 A1FREQ INFO N TEST BETA SE CHISQ LOG10P EXTRA
+            # 1 13613 chr1_13613_T_A T A 0.0514706 1 68 ADD 0.191978 0.695341 0.0762264 0.106528 NA
+
+            result = line.strip().split()
+            id = result[r_map["ID"]]
+            r_beta = result[r_map["BETA"]]
+            r_se = result[r_map["SE"]]
+            r_chisq = result[r_map["CHISQ"]]
+            r_log10p = result[r_map["LOG10P"]]
+            r_test = result[r_map["TEST"]]
+
+            variant_infos[id]["regenie_ml10p"] = r_log10p
+            variant_infos[id]["regenie_beta"] = r_beta
+            variant_infos[id]["regenie_chisq"] = r_chisq
+            variant_infos[id]["regenie_se"] = r_se
+            variant_infos[id]["regenie_test"] = r_test
+
+           
     info_list = [
          "transcript", "case_AC", "case_AN", "case_AF", "control_AC", "control_AN", "control_AF", "gnomADg_AC", "gnomADg_AN", "gnomADg_AF", "gnomADe2_AC", "gnomADe2_AN", "gnomADe2_AF", "most_severe_consequence", "level_most_severe_consequence", "cadd_raw_rs", "cadd_phred", "polyphen_pred", "polyphen_rankscore", "polyphen_score", "gerp_score", "gerp_rankscore", "sift_rankscore", "sift_pred", "sift_score", "spliceai_score_max", "fisher_or_gnomADg", "fisher_ml10p_gnomADg", "fisher_or_gnomADe2", "fisher_ml10p_gnomADe2", "fisher_or_control", "fisher_ml10p_control", "regenie_ml10p", "regenie_beta", "regenie_chisq", "regenie_se",
     ]
 
-    with open(regenie_output, 'r') as f_in, open(out, 'w') as f_out, open(higlass_vcf, 'w') as f_out_hg:
+    with open(out, 'w') as f_out, open(higlass_vcf, 'w') as f_out_hg:
         header = '# CHROM: chromosome\n'
         header += '# GENPOS: position with in the chromosome\n'
         header += '# ID: variant ID\n'
         header += '# ALLELE0: reference allele\n'
         header += '# ALLELE1: alternative allele\n'
-        header += '# A1FREQ: frequency of the alternative allele\n'
-        header += '# N: sample size (N = CASE_N + CONTROL_N)\n'
         header += '# R_TEST: test performed by Regenie (additive/dominant/recessive)\n'
         header += '# R_BETA: estimated effect sizes (Regenie)\n'
         header += '# R_SE: standard error of the Regenie test\n'
@@ -402,41 +434,17 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
         header += '# SIFT_PRED: SIFT prediction\n'
         header += '# SIFT_SCORE: SIFT score\n'
         header += '# SPLICEAI_MAX_SCORE: SpliceAI predicts whether a variant causes a splice acceptor gain or loss, or a splice donor gain or loss. The score shown here is the max score of these four scores\n'
-        header += 'CHROM GENPOS ID ALLELE0 ALLELE1 A1FREQ N R_TEST R_BETA R_SE R_CHISQ R_LOG10P CASE_AF CASE_N CONTROL_AF CONTROL_N F_LOG10P_CONTROL F_OR_CONTROL F_LOG10P_GNOMADG F_OR_GNOMADG F_LOG10P_GNOMADE2 F_OR_GNOMADE2 CADD_RAW_RS CADD_PHRED POLYPHEN_PRED POLYPHEN_RANKSCORE POLYPHEN_SCORE GERP_SCORE GERP_RANKSCORE SIFT_RANKSCORE SIFT_PRED SIFT_SCORE SPLICEAI_MAX_SCORE\n'
+        header += 'CHROM GENPOS ID ALLELE0 ALLELE1 R_TEST R_BETA R_SE R_CHISQ R_LOG10P CASE_AF CASE_N CONTROL_AF CONTROL_N F_LOG10P_CONTROL F_OR_CONTROL F_LOG10P_GNOMADG F_OR_GNOMADG F_LOG10P_GNOMADE2 F_OR_GNOMADE2 CADD_RAW_RS CADD_PHRED POLYPHEN_PRED POLYPHEN_RANKSCORE POLYPHEN_SCORE GERP_SCORE GERP_RANKSCORE SIFT_RANKSCORE SIFT_PRED SIFT_SCORE SPLICEAI_MAX_SCORE\n'
         f_out.write(header)
 
         f_out_hg.write('##fileformat=VCFv4.3\n')
         f_out_hg.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n')
-        
-        for line in f_in:
-            if line.startswith("##") or line.startswith("CHROM"):
-                continue
 
-            # Example line
-            # CHROM GENPOS ID ALLELE0 ALLELE1 A1FREQ INFO N TEST BETA SE CHISQ LOG10P EXTRA
-            # 1 13613 chr1_13613_T_A T A 0.0514706 1 68 ADD 0.191978 0.695341 0.0762264 0.106528 NA
-
-            result = line.strip().split()
-            id = result[r_map["ID"]]
-            chr = id.split("_")[0]
-            pos = result[r_map["GENPOS"]]
-            ref = result[r_map["ALLELE0"]]
-            alt = result[r_map["ALLELE1"]]
-            freq = result[r_map["A1FREQ"]]
-            samples = result[r_map["N"]]
-            r_test = result[r_map["TEST"]]
-            r_beta = result[r_map["BETA"]]
-            r_se = result[r_map["SE"]]
-            r_chisq = result[r_map["CHISQ"]]
-            r_log10p = result[r_map["LOG10P"]]
-
-            variant_infos[id]["regenie_ml10p"] = r_log10p
-            variant_infos[id]["regenie_beta"] = r_beta
-            variant_infos[id]["regenie_chisq"] = r_chisq
-            variant_infos[id]["regenie_se"] = r_se
+        for record in vcf_obj.parse_variants():
+            id = record.ID
             vi = variant_infos[id]
 
-            l = f"{chr} {pos} {id} {ref} {alt} {freq} {samples} {r_test} {r_beta} {r_se} {r_chisq} {r_log10p} {vi['case_AF']} {vi['case_N']} {vi['control_AF']} {vi['control_N']} {vi['fisher_ml10p_control']} {vi['fisher_or_control']}  {vi['fisher_ml10p_gnomADg']} {vi['fisher_or_gnomADg']} {vi['fisher_ml10p_gnomADe2']} {vi['fisher_or_gnomADe2']} {vi['cadd_raw_rs']} {vi['cadd_phred']} {vi['polyphen_pred']} {vi['polyphen_rankscore']} {vi['polyphen_score']} {vi['gerp_score']} {vi['gerp_rankscore']} {vi['sift_rankscore']} {vi['sift_pred']} {vi['sift_score']} {vi['spliceai_score_max']}"
+            l = f"{record.CHROM} {record.POS} {record.ID} {record.REF} {record.ALT} {vi['regenie_test']} {vi['regenie_beta']} {vi['regenie_se']} {vi['regenie_chisq']} {vi['regenie_ml10p']} {vi['case_AF']} {vi['case_N']} {vi['control_AF']} {vi['control_N']} {vi['fisher_ml10p_control']} {vi['fisher_or_control']}  {vi['fisher_ml10p_gnomADg']} {vi['fisher_or_gnomADg']} {vi['fisher_ml10p_gnomADe2']} {vi['fisher_or_gnomADe2']} {vi['cadd_raw_rs']} {vi['cadd_phred']} {vi['polyphen_pred']} {vi['polyphen_rankscore']} {vi['polyphen_score']} {vi['gerp_score']} {vi['gerp_rankscore']} {vi['sift_rankscore']} {vi['sift_pred']} {vi['sift_score']} {vi['spliceai_score_max']}"
             f_out.write(f"{l}\n")
             
 
@@ -447,8 +455,8 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
                 info+=field+"="+str(vi[field])+";"
             info = info.strip(";")
             
-            f_out_hg.write(f"{chr}\t{pos}\t{id}\t{ref}\t{alt}\t0\tPASS\t{info}\n")
-  
+            f_out_hg.write(f"{record.CHROM}\t{record.POS}\t{record.ID}\t{record.REF}\t{record.ALT}\t0\tPASS\t{info}\n")
+
 
 
 if __name__ == "__main__":
