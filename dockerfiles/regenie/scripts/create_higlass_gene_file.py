@@ -27,6 +27,7 @@ def main(regenie_output, snp_list, gene_info, aaf_bin, out):
         for info in tsv_file:
             if info[0] == "ens_id":
                 continue
+
             gene_id = info[0]
             gene_mapping[gene_id] = {
                 "chrom": info[1],

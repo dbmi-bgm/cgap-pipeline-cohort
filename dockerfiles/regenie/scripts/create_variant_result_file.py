@@ -8,7 +8,7 @@ from granite.lib.shared_vars import DStags
 import math
 from scipy.stats import fisher_exact
 from utils import get_worst_consequence, get_worst_transcript, clean_dbnsfp, get_maxds
-
+from utils import get_cases, VALID_GENOTYPES
 
 ################################################
 #   Top level variables
@@ -60,8 +60,6 @@ def summarize_genotypes(sample_gts, variant_id):
     and calculates AC, AN and AF across all samples.
     
     '''
-
-    VALID_GENOTYPES = ["./.", "0/0", "1/0", "0/1", "1/1" , "0|0", "1|0", "0|1", "1|1"]
 
     s_AC = s_AN = 0
 
@@ -149,10 +147,10 @@ def fisher_exact_gnomAD(case_AC, case_AN, gnomAD_AC, gnomAD_AN):
 @click.help_option("--help", "-h")
 @click.option("-r", "--regenie-output", required=True, type=str, help="Regenie output file")
 @click.option("-a", "--annotated-vcf", required=True, type=str, help="Annotated, jointly called VCF")
-@click.option("-c", "--cases", required=True, type=str, help="List of case sample IDs (comma separated)")
+@click.option("-s", "--sample-info", required=True, type=str, help="JSON string with sample info")
 @click.option("-o", "--out", required=True, type=str, help="the output file name of the variant level results")
 @click.option("-e", "--higlass-vcf", required=True, type=str, help="Higlass VCF file containing the results")
-def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
+def main(regenie_output, annotated_vcf, sample_info, out, higlass_vcf):
     """This script takes a variant-based regenie output file and adds Fisher exact test results.
        It also produces a Higlass compatible VCF with some annotations
 
@@ -207,7 +205,7 @@ def main(regenie_output, annotated_vcf, cases, out, higlass_vcf):
     idx_gnomADe2_AF = vcf_obj.header.get_tag_field_idx(VEP_TAG, 'gnomADe2_AF')
 
     cohort_sample_ids = vcf_obj.header.IDs_genotypes # This includes cases and controls
-    case_sample_ids = cases.split(",")
+    case_sample_ids =  get_cases(sample_info)
     control_sample_ids = [id for id in cohort_sample_ids if id not in case_sample_ids]
 
     # Verify that every case ID is present in the cohort VCF

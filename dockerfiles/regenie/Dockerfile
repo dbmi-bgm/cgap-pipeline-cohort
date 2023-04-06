@@ -23,7 +23,9 @@ RUN conda install -c bioconda  -c conda-forge \
     bgenix \
     click
 
-RUN pip install cgap-higlass-data granite-suite==0.2.0 scipy
+RUN conda install -c bioconda ucsc-bedgraphtobigwig
+
+RUN pip install cgap-higlass-data==0.2.0 granite-suite==0.2.0 scipy
 
 RUN conda clean -a -y -f
 
@@ -49,6 +51,9 @@ COPY scripts/create_mask_files.py .
 COPY scripts/create_phenotype.py .
 COPY scripts/run_regenie.sh .
 RUN chmod +x run_regenie.sh
+COPY scripts/create_variant_details_file.py .
+COPY scripts/create_variant_details_file.sh .
+RUN chmod +x create_variant_details_file.sh
 
 # default command
 CMD ["run_regenie.sh"]

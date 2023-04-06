@@ -7,21 +7,21 @@ echoerr() {
 }
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -v VCF -c CASES -e EXCLUDED_GENES -g GENE_ANNOTATIONS -b VC_TESTS -a AAF_BIN"
+    echo "Usage: ${0##*/} -v VCF -s SAMPLE_INFO -e EXCLUDED_GENES -g GENE_ANNOTATIONS -b VC_TESTS -a AAF_BIN"
     echo "-v VCF : path to VEP annotated VCF (gzipped)"
-    echo "-c CASES : comma separated list of sample IDs that are affected"
+    echo "-s SAMPLE_INFO : JSON string with sample information"
     echo "-a AAF_BIN : specifies the AAF upper bound used to generate burden masks"
     echo "-b VC_TESTS : gene-based tests to use"
     echo "-e EXCLUDED_GENES : comma separated list of genes to exclude from the analysis (no spaces)"
     echo "-g GENE_ANNOTATIONS : gene annotation file from portal"
     exit "$1"
 }
-while getopts "v:c:g:a:b:e:" opt; do
+while getopts "v:s:g:a:b:e:" opt; do
     case $opt in
         v) annotated_vcf="$OPTARG"
            annotated_vcf_tbi="$OPTARG.tbi"
         ;;
-        c) cases=$OPTARG;;
+        s) sample_info=$OPTARG;;
         g) gene_annotations=$OPTARG;;
         a) aaf_bin=$OPTARG;;
         b) vc_tests=$OPTARG;;
@@ -36,7 +36,7 @@ echo "Annotated VCF: $annotated_vcf"
 echo "Annotated VCF index: $annotated_vcf_tbi"
 echo "Gene annotation file: $gene_annotations"
 echo ""
-echo "Cases: $cases" #MSA_singleton_99_40-WES,MSA_singleton_782532_01_C_1_S8-WES,MSA_singleton_551913_P1_1_EXO_551913_01-WES,MSA_singleton_541376_01_C_1_S7-WES,MSA_singleton_300683_01_C_1_S6-WES,MSA_singleton_22699_MSA_A_1_S23-WES,MSA_singleton_22692_MSA_A_2_S24-WES,MSA_singleton_22655_MSA_A_2_S21-WES,MSA_singleton_22571_MSA_A_1_S20-WES,MSA_singleton_22561_MSA_A_1_S19-WES,MSA_singleton_22549_MSA_A_2_S18-WES,MSA_singleton_22527_MSA_A_1_S17-WES,MSA_singleton_22514_MSA_A_1_S16-WES,MSA_singleton_22494_MSA_A_1_S15-WES,MSA_singleton_22365_MSA_A_1_S14-WES,MSA_singleton_198677_01_C_1_S5-WES,MSA_singleton_171099_01_MSA_EXO-WES,MSA_singleton_14-49_A_2_S13-WES,MSA_singleton_126939_01_C_1_S2-WES,MSA_singleton_12_18-WES,MSA_singleton_11_46-WES,MSA_singleton_100584_01_C_2_S1-WES,MSA_singleton_07_36-WES,MSA_singleton_07_03-WES,MSA_singleton_04_56-WES,MSA_singleton_04_51-WES,MSA_singleton_03_55-WES,MSA_994562_P1_1_EXO_994562_01-WES,MSA_994562_M1_2_EXO_994562_02-WES,MSA_994562_F1_1_EXO_994562_03-WES,MSA_985648_S1_EXO_S1_MSA-WES,MSA_985648_P1_EXO_Proband_MSA-WES,MSA_985648_M_EXO_M_MSA-WES,MSA_828071_S3_2_EXO_828071_06-WES,MSA_828071_S1_1_EXO_828071_04-WES,MSA_828071_P1_2_EXO_828071_01-WES
+echo "Sample info: $sample_info"
 echo ""
 echo "Genes exluded from analysis: $excluded_genes"
 echo "============================="
@@ -51,9 +51,9 @@ then
     echoerr "Annotated VCF index missing"
 fi
 
-if [ -z "$cases" ]
+if [ -z "$sample_info" ]
 then
-    echoerr "Cases missing"
+    echoerr "Sample info is missing"
 fi
 
 if [ -z "$gene_annotations" ]
@@ -82,8 +82,8 @@ SCRIPT_LOCATION="/usr/local/bin" # To use in prod
 # Remove chrM - regenie does not work with it
 echo ""
 echo "== Removing unsupported chromosomes =="
-bcftools filter "$annotated_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY -O z > tmp.no_chrM.vcf.gz || exit 1
-#bcftools filter "$annotated_vcf" -r chr1 -O z > tmp.no_chrM.vcf.gz || exit 1
+#bcftools filter "$annotated_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY -O z > tmp.no_chrM.vcf.gz || exit 1
+bcftools filter "$annotated_vcf" -r chr1 -O z > tmp.no_chrM.vcf.gz || exit 1
 bcftools index -t tmp.no_chrM.vcf.gz || exit 1
 
 # Assign an ID to each variants - existing IDs will be overwritten as these can contain duplicate IDs
@@ -110,17 +110,16 @@ vcftools --vcf tmp.no_chrM.id.vcf \
 
 echo ""
 echo "== Apply GATK best practice filter =="
-python "$SCRIPT_LOCATION"/apply_gatk_filter.py -a tmp.no_chrM.id.filtered.recode.vcf -o tmp.no_chrM.id.filtered.recode.gatk.vcf || exit 1
+python "$SCRIPT_LOCATION"/apply_gatk_filter.py -a tmp.no_chrM.id.filtered.recode.vcf -o annotated_vcf_filtered.vcf || exit 1
 
-bgzip -c tmp.no_chrM.id.filtered.recode.gatk.vcf > tmp.no_chrM.id.filtered.recode.gatk.vcf.gz || exit 1
-tabix -p vcf tmp.no_chrM.id.filtered.recode.gatk.vcf.gz || exit 1
-mv tmp.no_chrM.id.filtered.recode.gatk.vcf regenie_input_source.vcf
+bgzip -c annotated_vcf_filtered.vcf > annotated_vcf_filtered.vcf.gz || exit 1
+tabix -p vcf annotated_vcf_filtered.vcf.gz || exit 1
 
 
 # Create BGEN for input to regenie
 echo ""
 echo "== Create BGEN file with index =="
-plink2 --export bgen-1.2 'bits=8' --out regenie_input --vcf tmp.no_chrM.id.filtered.recode.gatk.vcf.gz || exit 1
+plink2 --export bgen-1.2 'bits=8' --out regenie_input --vcf annotated_vcf_filtered.vcf.gz || exit 1
 
 # Create BGEN index
 bgenix -g regenie_input.bgen -index -clobber || exit 1
@@ -132,13 +131,26 @@ rm -f tmp*
 # This will create the file 'regenie_input.phenotype'. The sample file is created together with the bgen file.
 echo ""
 echo "== Create phenotype file =="
-python "$SCRIPT_LOCATION"/create_phenotype.py -s regenie_input.sample -o regenie_input.phenotype -c "$cases" || exit 1
+python "$SCRIPT_LOCATION"/create_phenotype.py -s regenie_input.sample -o regenie_input.phenotype -c "$sample_info" || exit 1
 
 # Create files for gene-level testing
 # This will create the files 'regenie_input.annotation', 'regenie_input.set_list', 'regenie_input.masks'
 echo ""
 echo "== Create mask files =="
-python "$SCRIPT_LOCATION"/create_mask_files.py -a regenie_input_source.vcf || exit 1
+python "$SCRIPT_LOCATION"/create_mask_files.py -a annotated_vcf_filtered.vcf || exit 1
+
+echo ""
+echo "== Create coverage bigWig file =="
+create-coverage-bed -i annotated_vcf_filtered.vcf \
+                  -o coverage.bed \
+                  -a hg38 \
+                  -q False || exit 1
+
+convert-bed-to-bw -i coverage.bed \
+                  -o coverage.bw \
+                  -a hg38 \
+                  -l 0 || exit 1
+
 
 echo ""
 echo "== Regenie step 1 =="
@@ -167,8 +179,8 @@ echo ""
 echo "== Create variant level result file and Higlass VCF =="
 
 python "$SCRIPT_LOCATION"/create_variant_result_file.py -r regenie_result_step2_variant_Y1.regenie \
-                                      -a regenie_input_source.vcf \
-                                      -c "$cases" \
+                                      -a annotated_vcf_filtered.vcf \
+                                      -s "$sample_info" \
                                       -o variant_level_results.txt \
                                       -e higlass_variant_tests.vcf || exit 1
 

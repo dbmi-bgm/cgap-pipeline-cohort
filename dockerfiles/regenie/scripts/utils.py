@@ -1,4 +1,7 @@
 from granite.lib.shared_functions import *
+import json
+
+VALID_GENOTYPES = ["./.", "0/0", "1/0", "0/1", "1/1" , "0|0", "1|0", "0|1", "1|1"]
 
 VEP_ORDER = {
     # HIGH
@@ -30,6 +33,10 @@ VEP_ORDER = {
     'MODIFIER': 23
 }
 
+def get_cases(sample_info):
+    sample_info_dec = json.loads(sample_info)
+    sample_info_cases = filter(lambda s: s["is_affected"], sample_info_dec)
+    return list(map(lambda x: x["sample_id"], sample_info_cases))
 
 def get_worst_consequence(consequence, sep='&'):
     ''' '''

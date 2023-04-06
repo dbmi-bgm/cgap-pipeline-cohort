@@ -12,10 +12,10 @@ inputs:
       position: 1
     secondaryFiles:
       - .tbi
-  cases:
+  sample_info:
     type: string
     inputBinding:
-      prefix: -c
+      prefix: -s
       position: 2
   gene_annotations:
     type: File
@@ -58,6 +58,16 @@ outputs:
       glob: higlass_gene_tests.sorted.vcf.gz
     secondaryFiles:
       - .tbi
+  annotated_vcf_filtered:
+    type: File
+    outputBinding:
+      glob:   annotated_vcf_filtered.vcf.gz
+    secondaryFiles:
+      - .tbi
+  coverage:
+    type: File
+    outputBinding:
+      glob: coverage.bw
 
 hints:
   - dockerPull: ACCOUNT/regenie:VERSION #aveit/cgap-regenie:0.1.1

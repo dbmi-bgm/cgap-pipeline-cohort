@@ -12,9 +12,9 @@ inputs:
       - .tbi
     doc: expect the path to the jointly called vcf.gz file
 
-  - id: cases
+  - id: sample_info
     type: string
-    doc: comma separated list of sample ids that are affected
+    doc: encoded JSON string containing sample information
 
   - id: gene_annotations
     type: File
@@ -55,14 +55,24 @@ outputs:
       - .tbi
     outputSource: regenie/higlass_gene_result
 
+  annotated_vcf_filtered:
+    type: File
+    secondaryFiles:
+      - .tbi
+    outputSource: regenie/annotated_vcf_filtered
+
+  coverage:
+    type: File
+    outputSource: regenie/coverage
+
 steps:
   regenie:
     run: regenie.cwl
     in:
       annotated_vcf:
         source: annotated_vcf
-      cases:
-        source: cases
+      sample_info:
+        source: sample_info
       gene_annotations:
         source: gene_annotations
       aaf_bin:
@@ -71,7 +81,7 @@ steps:
         source: vc_tests
       excluded_genes:
         source: excluded_genes
-    out: [variant_level_results, regenie_gene_results, higlass_variant_result, higlass_gene_result]
+    out: [variant_level_results, regenie_gene_results, higlass_variant_result, higlass_gene_result, annotated_vcf_filtered, coverage]
 
 doc: |
   run run_regenie.sh to create statistical analysis results and Higlass files

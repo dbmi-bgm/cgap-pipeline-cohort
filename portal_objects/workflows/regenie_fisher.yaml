@@ -11,7 +11,7 @@ runner:
     - regenie.cwl
 
 software:
-  - regenie@3.2.4
+  - regenie@3.2.5
 
 ## Input information ########################################
 #     Input files and parameters
@@ -26,7 +26,7 @@ input:
     argument_type: file.tsv_gz
 
   # Parameters
-  cases:
+  sample_info:
     argument_type: parameter.string
 
   aaf_bin:
@@ -59,3 +59,12 @@ output:
     argument_type: file.vcf_gz
     secondary_files:
       - vcf_gz_tbi
+
+  annotated_vcf_filtered:
+    argument_type: file.vcf_gz
+    secondary_files:
+      - vcf_gz_tbi
+
+  coverage:
+    argument_type: file.bigWig
+

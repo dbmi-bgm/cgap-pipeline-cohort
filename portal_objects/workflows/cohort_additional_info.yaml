@@ -1,0 +1,35 @@
+## Workflow information #####################################
+#     General information for the workflow
+#############################################################
+name: cohort_additional_info
+description: Creates a file with additional information for each variant of the cohort 
+
+runner:
+  language: cwl
+  main: workflow_additional_information.cwl
+  child:
+    - additional_information.cwl
+
+## Input information ########################################
+#     Input files and parameters
+#############################################################
+input:
+
+  # File arguments
+  annotated_vcf:
+    argument_type: file.vcf_gz
+
+  # Parameters
+  sample_info:
+    argument_type: parameter.string
+
+## Output information #######################################
+#     Output files and quality controls
+#############################################################
+output:
+
+  variant_details:
+    argument_type: file.vcf_gz
+    secondary_files:
+      - vcf_gz_tbi
+
