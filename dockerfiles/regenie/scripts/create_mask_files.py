@@ -5,7 +5,8 @@ from utils import get_worst_consequence, get_worst_transcript
 @click.command()
 @click.help_option("--help", "-h")
 @click.option("-a", "--annotated-vcf", required=True, type=str, help="VEP annotated VCF, filteres and with IDs")
-def main(annotated_vcf):
+@click.option("-c", "--high-cadd-threshold", required=True, type=float, help="High CADD threshold")
+def main(annotated_vcf, high_cadd_threshold):
     """This script takes an annotated VCF file as input and created the annotations and mask files needed by regenie
 
     Example usage: 
@@ -14,7 +15,6 @@ def main(annotated_vcf):
 
     """
 
-    HIGH_CADD_TRHESHOLD = 15.0
     VEP_TAG = 'CSQ'
 
     vcf_obj = vcf_parser.Vcf(annotated_vcf)
@@ -57,7 +57,7 @@ def main(annotated_vcf):
             is_nonsense = worst_consequence == "stop_gained"
             is_essential_splice = (worst_consequence == "splice_acceptor_variant") or (worst_consequence == "splice_donor_variant")
             cadd_phred = float(worst_transcript_[idx_cadd_phred]) if worst_transcript_[idx_cadd_phred] else False
-            is_high_cadd = cadd_phred >= HIGH_CADD_TRHESHOLD
+            is_high_cadd = cadd_phred >= high_cadd_threshold
             af = float(record.get_tag_value("AF"))
 
 

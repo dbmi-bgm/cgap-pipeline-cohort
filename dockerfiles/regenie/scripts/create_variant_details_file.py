@@ -30,13 +30,13 @@ def main(annotated_vcf, sample_info, output):
     variant_samples = {}
     with open(output, 'w') as f_out:
         f_out.write('##fileformat=VCFv4.3\n')
-        f_out.write('##samples is comma separated list with SAMPLE_ID:LINKTO_ID:IS_AFFECTED:TISSUE_TYPE:CONTACT\n')
         f_out.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n')
         for record in vcf_obj.parse_variants():
             id = record.ID
             samples = record.IDs_genotypes
             GT_idx = record.FORMAT.split(":").index("GT")
             variant_samples[id] = []
+            ##samples is comma separated list with SAMPLE_ID:LINKTO_ID:IS_AFFECTED:TISSUE_TYPE:CONTACT
             info="samples="
             for sample in samples:
                 gt = record.GENOTYPES[sample].split(":")[GT_idx]

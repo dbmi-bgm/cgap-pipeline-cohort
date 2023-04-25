@@ -30,6 +30,11 @@ inputs:
     default: "skato,acato-full"
     doc: comma separated list of VC tests to run
 
+  - id: high_cadd_threshold
+    type: float
+    default: 20.0
+    doc: CADD threshold for deleterious variants
+
   - id: excluded_genes
     type: string
     doc: genes to exclude
@@ -79,6 +84,8 @@ steps:
         source: aaf_bin
       vc_tests:
         source: vc_tests
+      high_cadd_threshold:
+        source: high_cadd_threshold
       excluded_genes:
         source: excluded_genes
     out: [variant_level_results, regenie_gene_results, higlass_variant_result, higlass_gene_result, annotated_vcf_filtered, coverage]

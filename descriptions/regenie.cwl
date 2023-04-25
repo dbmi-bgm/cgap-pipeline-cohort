@@ -32,11 +32,16 @@ inputs:
     inputBinding:
       prefix: -b
       position: 5
+  high_cadd_threshold:
+    type: float
+    inputBinding:
+      prefix: -c
+      position: 6
   excluded_genes:
     type: string
     inputBinding:
       prefix: -e
-      position: 6
+      position: 7
 outputs:
   variant_level_results:
     type: File

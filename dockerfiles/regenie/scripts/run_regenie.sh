@@ -16,7 +16,7 @@ printHelpAndExit() {
     echo "-g GENE_ANNOTATIONS : gene annotation file from portal"
     exit "$1"
 }
-while getopts "v:s:g:a:b:e:" opt; do
+while getopts "v:s:g:a:b:c:e:" opt; do
     case $opt in
         v) annotated_vcf="$OPTARG"
            annotated_vcf_tbi="$OPTARG.tbi"
@@ -25,6 +25,7 @@ while getopts "v:s:g:a:b:e:" opt; do
         g) gene_annotations=$OPTARG;;
         a) aaf_bin=$OPTARG;;
         b) vc_tests=$OPTARG;;
+        c) high_cadd_threshold=$OPTARG;;
         e) excluded_genes=$OPTARG;;
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
@@ -71,6 +72,11 @@ then
     echoerr "Gene-based tests missing. The following are supported: burden,skat,skato,skato-acat,acatv,acato,acato-full."
 fi
 
+if [ -z "$high_cadd_threshold" ]
+then
+    echoerr "High CADD threshold missing."
+fi
+
 if [ "$vc_tests" = "burden" ]
 then
     vc_tests=""
@@ -82,8 +88,8 @@ SCRIPT_LOCATION="/usr/local/bin" # To use in prod
 # Remove chrM - regenie does not work with it
 echo ""
 echo "== Removing unsupported chromosomes =="
-#bcftools filter "$annotated_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY -O z > tmp.no_chrM.vcf.gz || exit 1
-bcftools filter "$annotated_vcf" -r chr1 -O z > tmp.no_chrM.vcf.gz || exit 1
+bcftools filter "$annotated_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY -O z > tmp.no_chrM.vcf.gz || exit 1
+#bcftools filter "$annotated_vcf" -r chr1 -O z > tmp.no_chrM.vcf.gz || exit 1
 bcftools index -t tmp.no_chrM.vcf.gz || exit 1
 
 # Assign an ID to each variants - existing IDs will be overwritten as these can contain duplicate IDs
@@ -99,7 +105,6 @@ vcftools --vcf tmp.no_chrM.id.vcf \
          --recode \
          --recode-INFO-all \
          --out tmp.no_chrM.id.filtered \
-         --hwe 0.001 \
          --max-missing 0.9 \
          --min-alleles 2 \
          --max-alleles 2 \
@@ -109,8 +114,14 @@ vcftools --vcf tmp.no_chrM.id.vcf \
 
 
 echo ""
+echo "== Perform Hardy-Weinberg filtering by population =="
+python "$SCRIPT_LOCATION"/create_hwe_popmap.py -s "$sample_info" -o tmp.popmap.txt || exit 1
+"$SCRIPT_LOCATION"/filter_hwe_by_pop.pl -v tmp.no_chrM.id.filtered.recode.vcf -p tmp.popmap.txt -o tmp.no_chrM.id.hwe || exit 1
+rm -f tmp.no_chrM.id.filtered.recode.vcf
+
+echo ""
 echo "== Apply GATK best practice filter =="
-python "$SCRIPT_LOCATION"/apply_gatk_filter.py -a tmp.no_chrM.id.filtered.recode.vcf -o annotated_vcf_filtered.vcf || exit 1
+python "$SCRIPT_LOCATION"/apply_gatk_filter.py -a tmp.no_chrM.id.hwe.recode.vcf -o annotated_vcf_filtered.vcf || exit 1
 
 bgzip -c annotated_vcf_filtered.vcf > annotated_vcf_filtered.vcf.gz || exit 1
 tabix -p vcf annotated_vcf_filtered.vcf.gz || exit 1
@@ -137,7 +148,7 @@ python "$SCRIPT_LOCATION"/create_phenotype.py -s regenie_input.sample -o regenie
 # This will create the files 'regenie_input.annotation', 'regenie_input.set_list', 'regenie_input.masks'
 echo ""
 echo "== Create mask files =="
-python "$SCRIPT_LOCATION"/create_mask_files.py -a annotated_vcf_filtered.vcf || exit 1
+python "$SCRIPT_LOCATION"/create_mask_files.py -a annotated_vcf_filtered.vcf -c "$high_cadd_threshold" || exit 1
 
 echo ""
 echo "== Create coverage bigWig file =="

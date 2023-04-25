@@ -35,6 +35,9 @@ input:
   vc_tests:
     argument_type: parameter.string
 
+  high_cadd_threshold:
+    argument_type: parameter.float
+
   excluded_genes:
     argument_type: parameter.string
 

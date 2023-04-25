@@ -49,8 +49,11 @@ COPY scripts/create_higlass_gene_file.py .
 COPY scripts/create_variant_result_file.py .
 COPY scripts/create_mask_files.py .
 COPY scripts/create_phenotype.py .
+COPY scripts/create_hwe_popmap.py .
 COPY scripts/run_regenie.sh .
 RUN chmod +x run_regenie.sh
+COPY scripts/filter_hwe_by_pop.pl .
+RUN chmod +x filter_hwe_by_pop.pl
 COPY scripts/create_variant_details_file.py .
 COPY scripts/create_variant_details_file.sh .
 RUN chmod +x create_variant_details_file.sh

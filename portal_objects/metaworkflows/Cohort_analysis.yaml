@@ -41,6 +41,9 @@ input:
   vc_tests:
     argument_type: parameter.string
 
+  high_cadd_threshold:
+    argument_type: parameter.float
+
   excluded_genes:
     argument_type: parameter.string
   
@@ -79,6 +82,10 @@ workflows:
       vc_tests:
         argument_type: parameter.string
         value: "skato,acato-full"
+
+      high_cadd_threshold:
+        argument_type: parameter.float
+        value: "20.0"
 
       excluded_genes:
         argument_type: parameter.string
