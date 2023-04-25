@@ -149,8 +149,9 @@ def fisher_exact_gnomAD(case_AC, case_AN, gnomAD_AC, gnomAD_AN):
 @click.option("-a", "--annotated-vcf", required=True, type=str, help="Annotated, jointly called VCF")
 @click.option("-s", "--sample-info", required=True, type=str, help="JSON string with sample info")
 @click.option("-o", "--out", required=True, type=str, help="the output file name of the variant level results")
+@click.option("-f", "--af-threshold-higlass", required=True, type=str, help="Rare variant AF threshold for variants to include in Higlass")
 @click.option("-e", "--higlass-vcf", required=True, type=str, help="Higlass VCF file containing the results")
-def main(regenie_output, annotated_vcf, sample_info, out, higlass_vcf):
+def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, higlass_vcf):
     """This script takes a variant-based regenie output file and adds Fisher exact test results.
        It also produces a Higlass compatible VCF with some annotations
 
@@ -291,6 +292,11 @@ def main(regenie_output, annotated_vcf, sample_info, out, higlass_vcf):
             fisher_p_gnomADe2, fisher_or_gnomADe2, fisher_ml10p_gnomADe2 = fisher_exact_gnomAD(case_AC, case_AN, gnomADe2_AC, gnomADe2_AN)
             fisher_p_control, fisher_or_control, fisher_ml10p_control = fisher_calculation(case_AC, case_AN-case_AC, control_AC, control_AN-control_AC) 
 
+            # Include Higlass specific filtering into this logic
+            include_for_higlass = True
+            if gnomADg_AF and float(gnomADg_AF) > float(af_threshold_higlass):
+                include_for_higlass = False
+
             variant_infos[id] = {
                 "transcript": transcript_id,
                 "most_severe_consequence": worst_consequence,
@@ -338,6 +344,8 @@ def main(regenie_output, annotated_vcf, sample_info, out, higlass_vcf):
                 "regenie_chisq" : '',
                 "regenie_se" : '',
                 "regenie_test": '',
+
+                "include_for_higlass": include_for_higlass
             }
 
 
@@ -453,7 +461,8 @@ def main(regenie_output, annotated_vcf, sample_info, out, higlass_vcf):
                 info+=field+"="+str(vi[field])+";"
             info = info.strip(";")
             
-            f_out_hg.write(f"{record.CHROM}\t{record.POS}\t{record.ID}\t{record.REF}\t{record.ALT}\t0\tPASS\t{info}\n")
+            if vi["include_for_higlass"]:
+                f_out_hg.write(f"{record.CHROM}\t{record.POS}\t{record.ID}\t{record.REF}\t{record.ALT}\t0\tPASS\t{info}\n")
 
 
 

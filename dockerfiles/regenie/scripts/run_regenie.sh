@@ -12,11 +12,12 @@ printHelpAndExit() {
     echo "-s SAMPLE_INFO : JSON string with sample information"
     echo "-a AAF_BIN : specifies the AAF upper bound used to generate burden masks"
     echo "-b VC_TESTS : gene-based tests to use"
+    echo "-r AF_THRESHOLD_HIGLASS : AF threshold for rare variants that are included in Higlass (e.g. 0.03)"
     echo "-e EXCLUDED_GENES : comma separated list of genes to exclude from the analysis (no spaces)"
     echo "-g GENE_ANNOTATIONS : gene annotation file from portal"
     exit "$1"
 }
-while getopts "v:s:g:a:b:c:e:" opt; do
+while getopts "v:s:g:a:b:c:r:e:" opt; do
     case $opt in
         v) annotated_vcf="$OPTARG"
            annotated_vcf_tbi="$OPTARG.tbi"
@@ -26,6 +27,7 @@ while getopts "v:s:g:a:b:c:e:" opt; do
         a) aaf_bin=$OPTARG;;
         b) vc_tests=$OPTARG;;
         c) high_cadd_threshold=$OPTARG;;
+        r) af_threshold_higlass=$OPTARG;;
         e) excluded_genes=$OPTARG;;
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
@@ -77,6 +79,11 @@ then
     echoerr "High CADD threshold missing."
 fi
 
+if [ -z "$af_threshold_higlass" ]
+then
+    echoerr "Rare variant AF threshold for Higass result files missing."
+fi
+
 if [ "$vc_tests" = "burden" ]
 then
     vc_tests=""
@@ -100,7 +107,7 @@ bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' tmp.no_chrM.vcf.gz >
 # Perform variant and sample filtering
 
 echo ""
-echo "== Perform variant filtering =="
+echo "== Performing variant filtering =="
 vcftools --vcf tmp.no_chrM.id.vcf \
          --recode \
          --recode-INFO-all \
@@ -193,7 +200,9 @@ python "$SCRIPT_LOCATION"/create_variant_result_file.py -r regenie_result_step2_
                                       -a annotated_vcf_filtered.vcf \
                                       -s "$sample_info" \
                                       -o variant_level_results.txt \
+                                      -f "$af_threshold_higlass" \
                                       -e higlass_variant_tests.vcf || exit 1
+
 
 echo ""
 echo "== Create multilevel version of the Higlass VCF =="

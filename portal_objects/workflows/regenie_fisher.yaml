@@ -38,6 +38,9 @@ input:
   high_cadd_threshold:
     argument_type: parameter.float
 
+  af_threshold_higlass:
+    argument_type: parameter.float
+
   excluded_genes:
     argument_type: parameter.string
 

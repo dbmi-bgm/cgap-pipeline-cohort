@@ -37,11 +37,16 @@ inputs:
     inputBinding:
       prefix: -c
       position: 6
+  af_threshold_higlass:
+    type: float
+    inputBinding:
+      prefix: -r
+      position: 7
   excluded_genes:
     type: string
     inputBinding:
       prefix: -e
-      position: 7
+      position: 8
 outputs:
   variant_level_results:
     type: File

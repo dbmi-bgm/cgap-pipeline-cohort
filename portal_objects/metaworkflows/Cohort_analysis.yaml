@@ -44,6 +44,9 @@ input:
   high_cadd_threshold:
     argument_type: parameter.float
 
+  af_threshold_higlass:
+    argument_type: parameter.float
+
   excluded_genes:
     argument_type: parameter.string
   
@@ -86,6 +89,10 @@ workflows:
       high_cadd_threshold:
         argument_type: parameter.float
         value: "20.0"
+
+      af_threshold_higlass:
+        argument_type: parameter.float
+        value: "0.03"
 
       excluded_genes:
         argument_type: parameter.string
