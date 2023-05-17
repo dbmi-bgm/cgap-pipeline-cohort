@@ -14,14 +14,14 @@ def main(sample_info, output):
     sample_info_dict = {}
     for sample in sample_info_dec:
         sample_id = sample["sample_id"]
-        sample_info_dict[sample_id] = sample["population"]
+        sample_info_dict[sample_id] = sample["ancestry"]
 
 
     # Create the set list file from  set_list_data
     with open(output, "w") as output_file:
         for sample_id in sample_info_dict.keys():
-            population = sample_info_dict[sample_id]
-            output_file.write(f'{sample_id}\t{population}\n')
+            ancestry = sample_info_dict[sample_id]
+            output_file.write(f'{sample_id}\t{ancestry}\n')
 
 if __name__ == "__main__":
     main()

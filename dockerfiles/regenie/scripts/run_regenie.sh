@@ -92,6 +92,11 @@ fi
 SCRIPT_LOCATION="/usr/local/bin" # To use in prod
 #SCRIPT_LOCATION="/Users/alexandervelt/Documents/GitHub/cgap-pipeline-cohort/dockerfiles/regenie/scripts" # To use locally
 
+# Run peddy to infer the ancestry. This will be added to the sample_info json
+echo ""
+echo "== Run Peddy to infer ancestry =="
+sample_info=$(python "$SCRIPT_LOCATION"/run_peddy.py -a "$annotated_vcf" -s "$sample_info" || exit 1)
+
 # Remove chrM - regenie does not work with it
 echo ""
 echo "== Removing unsupported chromosomes =="

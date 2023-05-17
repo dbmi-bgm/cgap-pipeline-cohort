@@ -17,6 +17,7 @@ RUN ln -s /usr/bin/python3.8 /usr/bin/python
 
 RUN conda install -c bioconda  -c conda-forge \
     regenie=3.2.5 \
+    peddy=0.4.8 \
     plink2 \
     vcftools \
     bcftools \
@@ -50,6 +51,7 @@ COPY scripts/create_variant_result_file.py .
 COPY scripts/create_mask_files.py .
 COPY scripts/create_phenotype.py .
 COPY scripts/create_hwe_popmap.py .
+COPY scripts/run_peddy.py .
 COPY scripts/run_regenie.sh .
 RUN chmod +x run_regenie.sh
 COPY scripts/filter_hwe_by_pop.pl .
