@@ -11,7 +11,7 @@ description: Perform cohort analysis using Regenie
 input:
 
   # File arguments
-  annotated_vcf:
+  joint_called_vcf:
     argument_type: file.vcf_gz
     dimensionality: 1
 
@@ -34,6 +34,56 @@ input:
   #  },
   #  {...}
   # ]
+
+  reference_fa:
+    argument_type: file.fa
+    files:
+      - complete-reference-fasta@hg38
+
+  regions:
+    argument_type: file.txt
+    files:
+      - 10Mb-genomic-regions@hg38
+
+  vep:
+    argument_type: file.vep_tar
+    files:
+      - vep@101b
+
+  dbnsfp:
+    argument_type: file.dbnsfp_gz
+    files:
+      - dbnsfp@4.1a
+
+  spliceai_snv:
+    argument_type: file.vcf_gz
+    files:
+      - spliceai-snv@1.3
+
+  spliceai_indel:
+    argument_type: file.vcf_gz
+    files:
+      - spliceai-indel@1.3
+
+  gnomad:
+    argument_type: file.vcf_gz
+    files:
+      - gnomad-genome@3.1
+
+  gnomad2:
+    argument_type: file.vcf_gz
+    files:
+      - gnomad-exome@2.1.1
+
+  CADD_snv:
+    argument_type: file.tsv_gz
+    files:
+      - cadd-snv@1.6
+
+  CADD_indel:
+    argument_type: file.tsv_gz
+    files:
+      - cadd-indel@1.6
 
   aaf_bin:
     argument_type: parameter.float
@@ -59,9 +109,129 @@ input:
 workflows:
 
   ## Workflow definition #####################
-  #   regenie_fisher
+  #   cohort_filtering
   ############################################
-  regenie_fisher:
+  cohort_filtering:
+
+    ## Workflow arguments ##############
+    ####################################
+    input:
+
+      # File arguments
+      joint_called_vcf:
+        argument_type: file.vcf_gz
+        input_dimension: 1
+
+      sample_info:
+        argument_type: parameter.string
+
+
+    ## Output ##########################
+    ####################################
+    output:
+
+      # File output
+      joint_called_vcf_filtered:
+        file_type: Intermediate file
+
+      
+    ## EC2 Configuration to use ########
+    ####################################
+    config:
+        instance_type:
+          - c5.2xlarge
+        ebs_size: 30
+        EBS_optimized: True
+        spot_instance: False
+        run_name: run_cohort_filtering
+        behavior_on_capacity_limit: wait_and_retry
+
+
+  ## Workflow definition #####################
+  #   cohort_vep_annot
+  ############################################
+  cohort_vep_annot:
+
+    ## Specific arguments ##############
+    ####################################
+    input:
+
+      # File argument
+      input_vcf:
+        argument_type: file.vcf_gz
+        source: cohort_filtering
+        source_argument_name: joint_called_vcf_filtered
+
+      reference:
+        argument_type: file.fa
+        source_argument_name: reference_fa
+
+      regions:
+        argument_type: file.txt
+
+      vep:
+        argument_type: file.vep_tar
+
+      dbnsfp:
+        argument_type: file.dbnsfp_gz
+
+      spliceai_snv:
+        argument_type: file.vcf_gz
+
+      spliceai_indel:
+        argument_type: file.vcf_gz
+
+      gnomad:
+        argument_type: file.vcf_gz
+
+      gnomad2:
+        argument_type: file.vcf_gz
+
+      CADD_snv:
+        argument_type: file.tsv_gz
+
+      CADD_indel:
+        argument_type: file.tsv_gz
+
+      # Parameter argument
+      nthreads:
+        argument_type: parameter.integer
+        value: "72"
+
+    ## Output ##########################
+    ####################################
+    output:
+
+      # File output
+      annotated_vcf:
+        file_type: annotated VCF
+        description: output from VEP in VCF format
+        s3_lifecycle_category: long_term_archive
+
+    ## EC2 Configuration to use ########
+    ####################################
+    config:
+      instance_type:
+        - c5n.18xlarge
+        - c5.24xlarge
+        - c5a.24xlarge
+        - m5.24xlarge
+        - m5a.24xlarge
+        - m6i.24xlarge
+        - m6a.24xlarge
+        - c6i.24xlarge
+        - c6a.24xlarge
+      ebs_size: "1.35x"
+      EBS_optimized: True
+      spot_instance: True
+      run_name: run_cohort_vep_annot
+      behavior_on_capacity_limit: wait_and_retry
+
+
+  ## Workflow definition #####################
+  #   cohort_regenie_fisher
+  ############################################
+  cohort_regenie_fisher:
 
     ## Workflow arguments ##############
     ####################################
@@ -70,7 +240,8 @@ workflows:
       # File arguments
       annotated_vcf:
         argument_type: file.vcf_gz
-        input_dimension: 1
+        source: cohort_vep_annot
+        source_argument_name: annotated_vcf
 
       gene_annotations:
         argument_type: file.tsv_gz
@@ -157,7 +328,7 @@ workflows:
       # File arguments
       annotated_vcf:
         argument_type: file.vcf_gz
-        source: regenie_fisher
+        source: cohort_regenie_fisher
         source_argument_name: annotated_vcf_filtered
 
       sample_info:

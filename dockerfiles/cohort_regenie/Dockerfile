@@ -26,7 +26,7 @@ RUN conda install -c bioconda  -c conda-forge \
 
 RUN conda install -c bioconda ucsc-bedgraphtobigwig
 
-RUN pip install cgap-higlass-data==0.2.0 granite-suite==0.2.0 scipy
+RUN pip install cgap-higlass-data==0.3.0 granite-suite==0.2.0 scipy
 
 RUN conda clean -a -y -f
 

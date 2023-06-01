@@ -1,7 +1,7 @@
 ## Workflow information #####################################
 #     General information for the workflow
 #############################################################
-name: regenie_fisher
+name: cohort_regenie_fisher
 description: Run Regenie on jointly called VCF and calculate Fisher scores on variant level 
 
 runner:

@@ -4,14 +4,14 @@ from utils import get_worst_consequence, get_worst_transcript
 
 @click.command()
 @click.help_option("--help", "-h")
-@click.option("-a", "--annotated-vcf", required=True, type=str, help="VEP annotated VCF, filteres and with IDs")
+@click.option("-a", "--annotated-vcf", required=True, type=str, help="VEP annotated VCF (gzipped), filteres and with IDs")
 @click.option("-c", "--high-cadd-threshold", required=True, type=float, help="High CADD threshold")
 def main(annotated_vcf, high_cadd_threshold):
     """This script takes an annotated VCF file as input and created the annotations and mask files needed by regenie
 
     Example usage: 
 
-    python create_phenotype.py -a /path/to/annotated_vcf.vcf
+    python create_phenotype.py -a /path/to/annotated_vcf.vcf.gz -c 20
 
     """
 

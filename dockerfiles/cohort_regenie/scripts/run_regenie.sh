@@ -89,8 +89,8 @@ then
     vc_tests=""
 fi
 
-SCRIPT_LOCATION="/usr/local/bin" # To use in prod
-#SCRIPT_LOCATION="/Users/alexandervelt/Documents/GitHub/cgap-pipeline-cohort/dockerfiles/regenie/scripts" # To use locally
+#SCRIPT_LOCATION="/usr/local/bin" # To use in prod
+SCRIPT_LOCATION="/Users/alexandervelt/Documents/GitHub/cgap-pipeline-cohort/dockerfiles/regenie/scripts" # To use locally
 
 # Run peddy to infer the ancestry. This will be added to the sample_info json
 echo ""
@@ -100,44 +100,46 @@ sample_info=$(python "$SCRIPT_LOCATION"/run_peddy.py -a "$annotated_vcf" -s "$sa
 # Remove chrM - regenie does not work with it
 echo ""
 echo "== Removing unsupported chromosomes =="
-bcftools filter "$annotated_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY -O z > tmp.no_chrM.vcf.gz || exit 1
-#bcftools filter "$annotated_vcf" -r chr1 -O z > tmp.no_chrM.vcf.gz || exit 1
+#bcftools filter "$annotated_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY -O z > tmp.no_chrM.vcf.gz || exit 1
+bcftools filter "$annotated_vcf" -r chr1 -O z > tmp.no_chrM.vcf.gz || exit 1
 bcftools index -t tmp.no_chrM.vcf.gz || exit 1
 
 # Assign an ID to each variants - existing IDs will be overwritten as these can contain duplicate IDs
 echo ""
 echo "== Assigning unique ID to each variant =="
-bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' tmp.no_chrM.vcf.gz > tmp.no_chrM.id.vcf || exit 1
+#bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' tmp.no_chrM.vcf.gz > tmp.no_chrM.id.vcf || exit 1
+bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' tmp.no_chrM.vcf.gz -O z > tmp.no_chrM.id.vcf.gz || exit 1
+bcftools index -t tmp.no_chrM.id.vcf.gz || exit 1
+
+rm -f tmp.no_chrM.vcf.gz
 
 # Perform variant and sample filtering
 
 echo ""
 echo "== Performing variant filtering =="
-vcftools --vcf tmp.no_chrM.id.vcf \
+vcftools --gzvcf tmp.no_chrM.id.vcf.gz \
          --recode \
          --recode-INFO-all \
-         --out tmp.no_chrM.id.filtered \
          --max-missing 0.9 \
          --min-alleles 2 \
          --max-alleles 2 \
          --minQ 90 \
          --minDP 10 \
-         --mac 1 || exit 1
+         --mac 1 --stdout | gzip -c > tmp.no_chrM.id.filtered.recode.vcf.gz || exit 1
+
 
 
 echo ""
 echo "== Perform Hardy-Weinberg filtering by population =="
 python "$SCRIPT_LOCATION"/create_hwe_popmap.py -s "$sample_info" -o tmp.popmap.txt || exit 1
-"$SCRIPT_LOCATION"/filter_hwe_by_pop.pl -v tmp.no_chrM.id.filtered.recode.vcf -p tmp.popmap.txt -o tmp.no_chrM.id.hwe || exit 1
-rm -f tmp.no_chrM.id.filtered.recode.vcf
+"$SCRIPT_LOCATION"/filter_hwe_by_pop.pl -v tmp.no_chrM.id.filtered.recode.vcf.gz -p tmp.popmap.txt -o tmp.no_chrM.id.hwe.vcf.gz || exit 1
+rm -f tmp.no_chrM.id.filtered.recode.vcf.gz
+
+
 
 echo ""
 echo "== Apply GATK best practice filter =="
-python "$SCRIPT_LOCATION"/apply_gatk_filter.py -a tmp.no_chrM.id.hwe.recode.vcf -o annotated_vcf_filtered.vcf || exit 1
-
-bgzip -c annotated_vcf_filtered.vcf > annotated_vcf_filtered.vcf.gz || exit 1
-tabix -p vcf annotated_vcf_filtered.vcf.gz || exit 1
-
+python "$SCRIPT_LOCATION"/apply_gatk_filter.py -a tmp.no_chrM.id.hwe.vcf.gz -o annotated_vcf_filtered.vcf.gz || exit 1
 
 # Create BGEN for input to regenie
 echo ""
@@ -160,11 +162,11 @@ python "$SCRIPT_LOCATION"/create_phenotype.py -s regenie_input.sample -o regenie
 # This will create the files 'regenie_input.annotation', 'regenie_input.set_list', 'regenie_input.masks'
 echo ""
 echo "== Create mask files =="
-python "$SCRIPT_LOCATION"/create_mask_files.py -a annotated_vcf_filtered.vcf -c "$high_cadd_threshold" || exit 1
+python "$SCRIPT_LOCATION"/create_mask_files.py -a annotated_vcf_filtered.vcf.gz -c "$high_cadd_threshold" || exit 1
 
 echo ""
 echo "== Create coverage bigWig file =="
-create-coverage-bed -i annotated_vcf_filtered.vcf \
+create-coverage-bed -i annotated_vcf_filtered.vcf.gz \
                   -o coverage.bed \
                   -a hg38 \
                   -q False || exit 1
@@ -202,7 +204,7 @@ echo ""
 echo "== Create variant level result file and Higlass VCF =="
 
 python "$SCRIPT_LOCATION"/create_variant_result_file.py -r regenie_result_step2_variant_Y1.regenie \
-                                      -a annotated_vcf_filtered.vcf \
+                                      -a annotated_vcf_filtered.vcf.gz \
                                       -s "$sample_info" \
                                       -o variant_level_results.txt \
                                       -f "$af_threshold_higlass" \
@@ -218,7 +220,9 @@ create-cohort-vcf -i higlass_variant_tests.sorted.vcf \
                   -c fisher_ml10p_control \
                   -q True || exit 1
 cat higlass_variant_tests.multires.vcf | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > higlass_variant_tests.multires.sorted.vcf || exit 1
+rm -f higlass_variant_tests.multires.vcf
 bgzip -c higlass_variant_tests.multires.sorted.vcf > higlass_variant_tests.multires.vcf.gz || exit 1
+rm -f higlass_variant_tests.multires.sorted.vcf
 tabix -p vcf higlass_variant_tests.multires.vcf.gz || exit 1
 
 echo ""
