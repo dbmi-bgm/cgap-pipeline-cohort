@@ -17,12 +17,13 @@ RUN ln -s /usr/bin/python3.8 /usr/bin/python
 
 RUN conda install -c bioconda  -c conda-forge \
     regenie=3.2.5 \
-    peddy=0.4.8 \
     plink2 \
     vcftools \
     bcftools \
     bgenix \
     click
+
+RUN conda install -c bioconda  -c conda-forge peddy=0.4.8 
 
 RUN conda install -c bioconda ucsc-bedgraphtobigwig
 
