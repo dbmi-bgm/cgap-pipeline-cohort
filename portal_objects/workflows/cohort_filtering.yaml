@@ -8,7 +8,11 @@ runner:
   language: cwl
   main: workflow_filtering.cwl
   child:
+    - bcftools_norm_multiallelics.cwl
     - filtering.cwl
+
+software:
+  - BCFtools@1.11
 
 ## Input information ########################################
 #     Input files and parameters
@@ -18,6 +22,9 @@ input:
   # File arguments
   joint_called_vcf:
     argument_type: file.vcf_gz
+
+  reference:
+    argument_type: file.fa
 
   # Parameters
   sample_info:
@@ -32,5 +39,7 @@ output:
   # File output
   joint_called_vcf_filtered:
     argument_type: file.vcf_gz
+    secondary_files:
+      - vcf_gz_tbi
     
 

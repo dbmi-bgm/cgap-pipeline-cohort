@@ -10,13 +10,9 @@ runner:
   main: workflow_cohort_vep_annot.cwl
   child:
     - vep_annot.cwl
-    - bcftools_norm_multiallelics.cwl
 
 software:
   - BCFtools@1.11
-  - VEP@101
-  - granite@0.2.0
-  - VCFtools@954e607
 
 ## Input information ########################################
 #     Input files and parameters

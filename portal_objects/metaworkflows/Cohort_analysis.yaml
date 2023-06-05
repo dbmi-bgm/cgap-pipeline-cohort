@@ -122,6 +122,10 @@ workflows:
         argument_type: file.vcf_gz
         input_dimension: 1
 
+      reference:
+        argument_type: file.fa
+        source_argument_name: reference_fa
+
       sample_info:
         argument_type: parameter.string
 

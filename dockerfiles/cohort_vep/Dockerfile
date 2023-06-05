@@ -25,6 +25,7 @@ RUN apt-get update -y && apt-get install -y \
     libmysqlclient-dev \
     libpng-dev \
     libssl-dev \
+    libxml-libxml-perl \
     libexpat1-dev
 
 #######################################################################
@@ -36,8 +37,6 @@ WORKDIR /usr/local/bin
 #     Software
 #######################################################################
 
-RUN conda install -c bioconda  -c conda-forge \
-    bcftools
 
 ## VEP
 RUN git clone https://github.com/Ensembl/ensembl-vep.git && \
@@ -72,6 +71,8 @@ RUN export PERL5LIB=$PERL5LIB:/usr/local/bin/ensembl-vep && \
     cd /usr/local/bin/ensembl-vep && \
     perl -Imodules t/AnnotationSource_File_BigWig.t && \
     cd /usr/local/bin
+
+RUN conda install -c bioconda  -c conda-forge bcftools>=1.11
 
 #######################################################################
 #     Scripts

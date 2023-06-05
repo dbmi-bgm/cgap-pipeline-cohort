@@ -12,6 +12,13 @@ inputs:
       - .tbi
     doc: expect the path to the jointly called vcf.gz file
 
+  - id: reference
+    type: File
+    secondaryFiles:
+      - ^.dict
+      - .fai
+    doc: expect the path to the fa reference file
+
   - id: sample_info
     type: string
     doc: encoded JSON string containing sample information
@@ -22,11 +29,20 @@ outputs:
     outputSource: filtering/joint_called_vcf_filtered
 
 steps:
+  bcftools_norm_multiallelics:
+    run: bcftools_norm_multiallelics.cwl
+    in:
+      input:
+        source: joint_called_vcf
+      reference:
+        source: reference
+    out: [output]
+
   filtering:
     run: filtering.cwl
     in:
       joint_called_vcf:
-        source: joint_called_vcf
+        source: bcftools_norm_multiallelics/output
       sample_info:
         source: sample_info
     out: [joint_called_vcf_filtered]
