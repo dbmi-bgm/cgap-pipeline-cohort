@@ -9,9 +9,9 @@ requirements:
 
 hints:
   - class: DockerRequirement
-    dockerPull: ACCOUNT/snv_germline_tools:VERSION
+    dockerPull: ACCOUNT/cohort_filtering:VERSION
 
-baseCommand: [bcftools-norm-multiallelics.sh]
+baseCommand: [split_multiallelics.sh]
 
 inputs:
   - id: input

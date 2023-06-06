@@ -8,7 +8,7 @@ runner:
   language: cwl
   main: workflow_filtering.cwl
   child:
-    - bcftools_norm_multiallelics.cwl
+    - split_multiallelics.cwl
     - filtering.cwl
 
 software:
