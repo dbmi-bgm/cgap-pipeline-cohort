@@ -13,19 +13,37 @@ RUN apt-get update && apt-get install -y libzstd-dev \
     tabix \
     autoconf \
     libssl-dev \
-    less \
     libbz2-dev \
     pkg-config \
     liblzma-dev
 
 RUN ln -s /usr/bin/python3.8 /usr/bin/python
 
+
+## vcftools
+RUN git clone https://github.com/vcftools/vcftools.git && \
+    mv vcftools vcftools_tmp && \
+    cd vcftools_tmp && \
+    git checkout 954e607 && \
+    ./autogen.sh && \
+    ./configure && \
+    make && \
+    make install && \
+    cd ..
+
+## bcftools
+RUN wget https://github.com/samtools/bcftools/releases/download/1.11/bcftools-1.11.tar.bz2 && \
+    tar -xjf bcftools-1.11.tar.bz2 && \
+    rm -rf bcftools-1.11.tar.bz2 && \
+    cd bcftools-1.11 && \
+    ./configure && \
+    make && \
+    cd .. && \
+    ln -s bcftools-1.11 bcftools
+
 RUN conda install -c bioconda  -c conda-forge \
-    vcftools \
-    bcftools>=1.11 \
     click \
     peddy=0.4.8
-
 
 
 RUN pip install granite-suite==0.2.0 scipy
@@ -38,6 +56,7 @@ RUN conda clean -a -y -f
 #     Setting env variables
 #######################################################################
 
+ENV PATH=/usr/local/bin/bcftools/:$PATH
 ## Supporting UTF-8
 RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"
 ENV LC_ALL=en_US.UTF-8
