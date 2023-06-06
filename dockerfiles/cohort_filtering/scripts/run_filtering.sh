@@ -94,8 +94,9 @@ rm -f tmp.no_chrM.id.filtered.recode.vcf.gz
 
 echo ""
 echo "== Apply GATK best practice filter =="
+# This will also index the output file
 python "$SCRIPT_LOCATION"/apply_gatk_filter.py -a tmp.no_chrM.id.hwe.vcf.gz -o joint_called_vcf_filtered.vcf.gz || exit 1
-tabix -p vcf joint_called_vcf_filtered.vcf.gz || exit 1
+
 
 echo ""
 echo "== DONE =="

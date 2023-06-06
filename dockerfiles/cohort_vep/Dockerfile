@@ -26,7 +26,9 @@ RUN apt-get update -y && apt-get install -y \
     libpng-dev \
     libssl-dev \
     libxml-libxml-perl \
-    libexpat1-dev
+    libexpat1-dev \
+    autoconf \
+    pkg-config 
 
 #######################################################################
 #     Setting working env
@@ -72,7 +74,27 @@ RUN export PERL5LIB=$PERL5LIB:/usr/local/bin/ensembl-vep && \
     perl -Imodules t/AnnotationSource_File_BigWig.t && \
     cd /usr/local/bin
 
-RUN conda install -c bioconda  -c conda-forge bcftools>=1.11
+
+## vcftools
+RUN git clone https://github.com/vcftools/vcftools.git && \
+    mv vcftools vcftools_tmp && \
+    cd vcftools_tmp && \
+    git checkout 954e607 && \
+    ./autogen.sh && \
+    ./configure && \
+    make && \
+    make install && \
+    cd ..
+
+## bcftools
+RUN wget https://github.com/samtools/bcftools/releases/download/1.11/bcftools-1.11.tar.bz2 && \
+    tar -xjf bcftools-1.11.tar.bz2 && \
+    rm -rf bcftools-1.11.tar.bz2 && \
+    cd bcftools-1.11 && \
+    ./configure && \
+    make && \
+    cd .. && \
+    ln -s bcftools-1.11 bcftools
 
 #######################################################################
 #     Scripts
@@ -84,6 +106,7 @@ RUN chmod +x vep-annot.sh
 #######################################################################
 #     Setting env variables
 #######################################################################
+ENV PATH=/usr/local/bin/bcftools/:$PATH
 ENV PATH=/usr/local/bin/ensembl-vep/:$PATH
 ENV PERL5LIB=$PERL5LIB:/usr/local/bin/cpanm_bw/lib/perl5:/usr/local/bin/ensembl-vep
 
