@@ -92,20 +92,11 @@ outputs:
     outputSource: vep_annot/output
 
 steps:
-  split_multiallelics:
-    run: split_multiallelics.cwl
-    in:
-      input:
-        source: input_vcf
-      reference:
-        source: reference
-    out: [output]
-
   vep_annot:
     run: vep_annot.cwl
     in:
       input:
-        source: split_multiallelics/output
+        source: input_vcf
       reference:
         source: reference
       regions:
@@ -136,5 +127,4 @@ steps:
 
 
 doc: |
-  run split_multiallelics |
   run vep

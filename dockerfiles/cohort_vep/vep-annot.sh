@@ -38,7 +38,7 @@ mkdir -p $directory
 
 # command line VEP
 # plugins
-plugin_dbnsfp="--plugin dbNSFP,${dbnsfp},GERP++_RS,GERP++_RS_rankscore,Polyphen2_HVAR_pred,Polyphen2_HVAR_rankscore,Polyphen2_HVAR_score,SIFT_pred,SIFT_converted_rankscore,SIFT_score,Ensembl_transcriptid"
+plugin_dbnsfp="--plugin dbNSFP,${dbnsfp},GERP++_RS,GERP++_RS_rankscore,Polyphen2_HVAR_pred,Polyphen2_HVAR_rankscore,CADD_raw_rankscore,Polyphen2_HVAR_score,SIFT_pred,SIFT_converted_rankscore,SIFT_score,Ensembl_transcriptid"
 plugin_spliceai="--plugin SpliceAI,snv=${spliceai_snv_gz},indel=${spliceai_indel_gz}"
 plugin_CADD="--plugin CADD,${CADD_snv},${CADD_indel}"
 
