@@ -29,8 +29,8 @@ outputs:
     outputSource: filtering/joint_called_vcf_filtered
 
 steps:
-  bcftools_norm_multiallelics:
-    run: bcftools_norm_multiallelics.cwl
+  split_multiallelics:
+    run: split_multiallelics.cwl
     in:
       input:
         source: joint_called_vcf
@@ -42,7 +42,7 @@ steps:
     run: filtering.cwl
     in:
       joint_called_vcf:
-        source: bcftools_norm_multiallelics/output
+        source: split_multiallelics/output
       sample_info:
         source: sample_info
     out: [joint_called_vcf_filtered]

@@ -92,8 +92,8 @@ outputs:
     outputSource: vep_annot/output
 
 steps:
-  bcftools_norm_multiallelics:
-    run: bcftools_norm_multiallelics.cwl
+  split_multiallelics:
+    run: split_multiallelics.cwl
     in:
       input:
         source: input_vcf
@@ -105,7 +105,7 @@ steps:
     run: vep_annot.cwl
     in:
       input:
-        source: bcftools_norm_multiallelics/output
+        source: split_multiallelics/output
       reference:
         source: reference
       regions:
@@ -136,5 +136,5 @@ steps:
 
 
 doc: |
-  run bcftools_norm_multiallelics |
+  run split_multiallelics |
   run vep

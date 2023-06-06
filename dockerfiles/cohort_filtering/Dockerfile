@@ -11,7 +11,11 @@ RUN apt-get update && apt-get install -y libzstd-dev \
     libboost-all-dev \
     locales \
     tabix \
-    less
+    libssl1.0.0 \ 
+    libssl-dev \
+    less \
+    libbz2-dev \
+    liblzma-dev
 
 RUN ln -s /usr/bin/python3.8 /usr/bin/python
 
