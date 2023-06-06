@@ -5,7 +5,8 @@ input_vcf=$1
 reference=$2
 
 # run bcftools
-bcftools norm -m -any -f $reference -o split_tmp.vcf -O v $input_vcf
+bcftools --version
+bcftools norm -m -any -f $reference -o split_tmp.vcf -O v $input_vcf || exit 1
 
 py_script="
 fo = open('split.vcf', 'w')
