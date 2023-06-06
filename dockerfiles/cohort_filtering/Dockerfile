@@ -49,8 +49,8 @@ COPY scripts/create_hwe_popmap.py .
 COPY scripts/run_peddy.py .
 COPY scripts/run_filtering.sh .
 RUN chmod +x run_filtering.sh
-COPY split_multiallelics.sh .
-RUN chmod +x split_multiallelics.sh
+COPY scripts/split_multiallelics.sh .
+RUN chmod +x scripts/split_multiallelics.sh
 
 
 # default command
