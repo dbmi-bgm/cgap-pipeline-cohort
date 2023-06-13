@@ -68,12 +68,6 @@ outputs:
       glob: higlass_gene_tests.sorted.vcf.gz
     secondaryFiles:
       - .tbi
-  annotated_vcf_filtered:
-    type: File
-    outputBinding:
-      glob:   annotated_vcf_filtered.vcf.gz
-    secondaryFiles:
-      - .tbi
   coverage:
     type: File
     outputBinding:

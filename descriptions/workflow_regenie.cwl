@@ -65,12 +65,6 @@ outputs:
       - .tbi
     outputSource: regenie/higlass_gene_result
 
-  annotated_vcf_filtered:
-    type: File
-    secondaryFiles:
-      - .tbi
-    outputSource: regenie/annotated_vcf_filtered
-
   coverage:
     type: File
     outputSource: regenie/coverage
@@ -95,7 +89,7 @@ steps:
         source: af_threshold_higlass
       excluded_genes:
         source: excluded_genes
-    out: [variant_level_results, regenie_gene_results, higlass_variant_result, higlass_gene_result, annotated_vcf_filtered, coverage]
+    out: [variant_level_results, regenie_gene_results, higlass_variant_result, higlass_gene_result, coverage]
 
 doc: |
   run run_regenie.sh to create statistical analysis results and Higlass files

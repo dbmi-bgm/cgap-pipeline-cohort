@@ -87,18 +87,23 @@ input:
 
   aaf_bin:
     argument_type: parameter.float
+    value: "0.01"
 
   vc_tests:
     argument_type: parameter.string
+    value: "skato,acato-full"
 
   high_cadd_threshold:
     argument_type: parameter.float
+    value: "20.0"
 
   af_threshold_higlass:
     argument_type: parameter.float
+    value: "0.03"
 
   excluded_genes:
     argument_type: parameter.string
+    value: "none"
   
 
 
@@ -227,7 +232,7 @@ workflows:
         - c6a.24xlarge
       ebs_size: "1.35x"
       EBS_optimized: True
-      spot_instance: False
+      spot_instance: True
       run_name: run_cohort_vep_annot
       behavior_on_capacity_limit: wait_and_retry
 
@@ -271,7 +276,7 @@ workflows:
 
       excluded_genes:
         argument_type: parameter.string
-        value: ""
+        value: "none"
 
 
     ## Output ##########################
@@ -298,11 +303,8 @@ workflows:
       higlass_gene_result:
         file_type: Cohort gene results
         higlass_file: True
-        # linkto_location:
+        # linkto_location:ß
         #   - SampleProcessing
-
-      annotated_vcf_filtered:
-        file_type: Intermediate file
 
       coverage:
         file_type: Cohort coverage file
@@ -333,8 +335,8 @@ workflows:
       # File arguments
       annotated_vcf:
         argument_type: file.vcf_gz
-        source: cohort_regenie_fisher
-        source_argument_name: annotated_vcf_filtered
+        source: cohort_vep_annot
+        source_argument_name: annotated_vcf
 
       sample_info:
         argument_type: parameter.string

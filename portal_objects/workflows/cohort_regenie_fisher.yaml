@@ -66,11 +66,6 @@ output:
     secondary_files:
       - vcf_gz_tbi
 
-  annotated_vcf_filtered:
-    argument_type: file.vcf_gz
-    secondary_files:
-      - vcf_gz_tbi
-
   coverage:
     argument_type: file.bigWig
 
