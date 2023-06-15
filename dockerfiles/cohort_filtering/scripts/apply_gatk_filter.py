@@ -135,7 +135,7 @@ def main(annotated_vcf, out):
 
     compress_and_close_chunk(chunk-1, f_out)
     # Files need to be in the correct order to produce a sorted vcf. This is required for tabix to work.
-    cmd_result = os.system(f"bcftools concat {' '.join(chunk_files)} -o {out} -O z  || exit 1") 
+    cmd_result = os.system(f"bcftools concat {' '.join(chunk_files)} -o {out} --threads 6 -O z  || exit 1") 
     if cmd_result > 0: # exit status shows error
         raise Exception(f"bcftools concat command failed.")
     cmd_result = os.system(f"tabix -p vcf -f {out} || exit 1")
@@ -158,7 +158,7 @@ def compress_and_close_chunk(chunk:int, file_handle):
         return
     file_handle.close()
     file_name = f"{CHUNK_PREFIX}_{chunk}.vcf"
-    os.system(f"bgzip -c {file_name} > {file_name}.gz || exit 1")
+    os.system(f"bgzip --threads 6 -c {file_name} > {file_name}.gz || exit 1")
     os.system(f"rm -f {file_name}")
 
 

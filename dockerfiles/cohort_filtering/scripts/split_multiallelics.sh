@@ -7,7 +7,7 @@ reference=$2
 # run bcftools
 bcftools --version
 #bcftools norm -m -any -f $reference -o split_tmp.vcf -O v $input_vcf || exit 1
-bcftools norm -m -any -f $reference -o split.vcf.gz -O z $input_vcf || exit 1
+bcftools norm -m -any -f $reference -o split.vcf.gz --threads 6 -O z $input_vcf || exit 1
 
 # py_script="
 # fo = open('split.vcf', 'w')
@@ -33,3 +33,7 @@ bcftools norm -m -any -f $reference -o split.vcf.gz -O z $input_vcf || exit 1
 # compress and index output vcf
 #bgzip split.vcf || exit 1
 tabix -p vcf split.vcf.gz || exit 1
+rm -f "$input_vcf"
+
+echo ""
+echo "== DONE =="

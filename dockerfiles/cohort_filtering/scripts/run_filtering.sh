@@ -59,16 +59,18 @@ sample_info=$(python "$SCRIPT_LOCATION"/run_peddy.py -a "$joint_called_vcf" -s "
 echo ""
 echo "== Removing unsupported chromosomes =="
 bcftools --version
-bcftools filter "$joint_called_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY -O z > tmp.no_chrM.vcf.gz || exit 1
+bcftools filter "$joint_called_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY --threads 6 -O z > tmp.no_chrM.vcf.gz || exit 1
 #bcftools filter "$joint_called_vcf" -r chr1 -O z > tmp.no_chrM.vcf.gz || exit 1
-bcftools index -t tmp.no_chrM.vcf.gz || exit 1
+bcftools index -t tmp.no_chrM.vcf.gz --threads 6 || exit 1
+
+rm -f "$joint_called_vcf"
 
 # Assign an ID to each variants - existing IDs will be overwritten as these can contain duplicate IDs
 echo ""
 echo "== Assigning unique ID to each variant =="
 #bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' tmp.no_chrM.vcf.gz > tmp.no_chrM.id.vcf || exit 1
-bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' tmp.no_chrM.vcf.gz -O z > tmp.no_chrM.id.vcf.gz || exit 1
-bcftools index -t tmp.no_chrM.id.vcf.gz || exit 1
+bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' tmp.no_chrM.vcf.gz --threads 6 -O z > tmp.no_chrM.id.vcf.gz || exit 1
+bcftools index -t tmp.no_chrM.id.vcf.gz --threads 6 || exit 1
 
 rm -f tmp.no_chrM.vcf.gz
 
@@ -85,6 +87,7 @@ vcftools --gzvcf tmp.no_chrM.id.vcf.gz \
          --minDP 10 \
          --mac 1 --stdout | gzip -c > tmp.no_chrM.id.filtered.recode.vcf.gz || exit 1
 
+rm -f tmp.no_chrM.id.vcf.gz
 
 echo ""
 echo "== Perform Hardy-Weinberg filtering by population =="
@@ -96,7 +99,7 @@ echo ""
 echo "== Apply GATK best practice filter =="
 # This will also index the output file
 python "$SCRIPT_LOCATION"/apply_gatk_filter.py -a tmp.no_chrM.id.hwe.vcf.gz -o joint_called_vcf_filtered.vcf.gz || exit 1
-
+rm -f tmp.no_chrM.id.hwe.vcf.gz
 
 echo ""
 echo "== DONE =="

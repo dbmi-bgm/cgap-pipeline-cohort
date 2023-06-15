@@ -76,10 +76,12 @@ for filename in ${sorted[@]};
     if [[ $filename =~ "M" ]]; then
       chr_M=$filename
     else
+      echo "Indexing file $filename"
       tabix -p vcf -f "$filename" || exit 1
       files_sorted="$files_sorted$filename "
     fi
   done
 
-bcftools concat -o combined.vep.vcf.gz -O z $files_sorted || exit 1
+echo "Concatenating files: $files_sorted"
+bcftools concat -o combined.vep.vcf.gz --threads 16 -O z $files_sorted || exit 1
 tabix -p vcf combined.vep.vcf.gz || exit 1
