@@ -63,7 +63,6 @@ bcftools filter "$joint_called_vcf" -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,c
 #bcftools filter "$joint_called_vcf" -r chr1 -O z > tmp.no_chrM.vcf.gz || exit 1
 bcftools index -t tmp.no_chrM.vcf.gz --threads 6 || exit 1
 
-rm -f "$joint_called_vcf"
 
 # Assign an ID to each variants - existing IDs will be overwritten as these can contain duplicate IDs
 echo ""

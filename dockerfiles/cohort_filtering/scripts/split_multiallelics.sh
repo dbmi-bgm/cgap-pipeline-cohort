@@ -33,7 +33,6 @@ bcftools norm -m -any -f $reference -o split.vcf.gz --threads 6 -O z $input_vcf 
 # compress and index output vcf
 #bgzip split.vcf || exit 1
 tabix -p vcf split.vcf.gz || exit 1
-rm -f "$input_vcf"
 
 echo ""
 echo "== DONE =="

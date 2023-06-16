@@ -76,12 +76,16 @@ for filename in ${sorted[@]};
     if [[ $filename =~ "M" ]]; then
       chr_M=$filename
     else
-      echo "Indexing file $filename"
-      tabix -p vcf -f "$filename" || exit 1
+      #echo "Indexing file $filename"
+      #tabix -p vcf -f "$filename" || exit 1
       files_sorted="$files_sorted$filename "
     fi
   done
 
 echo "Concatenating files: $files_sorted"
-bcftools concat -o combined.vep.vcf.gz --threads 16 -O z $files_sorted || exit 1
-tabix -p vcf combined.vep.vcf.gz || exit 1
+bcftools concat -o combined.vep.unsorted.vcf.gz --threads 16 -O z $files_sorted || exit 1
+echo "Removing temporary files"
+rm -f $files_sorted
+echo "Sorting and indexing combined file"
+bcftools sort -o combined.vep.vcf.gz --write-index -O z combined.vep.unsorted.vcf.gz || exit 1
+#tabix -p vcf combined.vep.vcf.gz || exit 1
