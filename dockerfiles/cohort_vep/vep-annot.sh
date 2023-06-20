@@ -87,5 +87,5 @@ bcftools concat -o combined.vep.unsorted.vcf.gz --threads 16 -O z $files_sorted 
 echo "Removing temporary files"
 rm -f $files_sorted
 echo "Sorting and indexing combined file"
-bcftools sort -o combined.vep.vcf.gz --write-index -O z combined.vep.unsorted.vcf.gz || exit 1
-#tabix -p vcf combined.vep.vcf.gz || exit 1
+bcftools sort -o combined.vep.vcf.gz -O z combined.vep.unsorted.vcf.gz || exit 1
+tabix -p vcf combined.vep.vcf.gz || exit 1
