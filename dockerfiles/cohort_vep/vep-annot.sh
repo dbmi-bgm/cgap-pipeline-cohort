@@ -83,9 +83,10 @@ for filename in ${sorted[@]};
   done
 
 echo "Concatenating files: $files_sorted"
-bcftools concat -o combined.vep.unsorted.vcf.gz --threads 16 -O z $files_sorted || exit 1
+bcftools concat -o combined.vep.vcf.gz -D -a --threads 16 -O z $files_sorted || exit 1
 echo "Removing temporary files"
 rm -f $files_sorted
-echo "Sorting and indexing combined file"
-bcftools sort -o combined.vep.vcf.gz -O z combined.vep.unsorted.vcf.gz || exit 1
+# echo "Sorting and indexing combined file"
+# bcftools sort -o combined.vep.vcf.gz -O z combined.vep.unsorted.vcf.gz || exit 1
+echo "Indexing combined file"
 tabix -p vcf combined.vep.vcf.gz || exit 1
