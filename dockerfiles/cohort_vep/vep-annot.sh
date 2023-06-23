@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPT_LOCATION="/usr/local/bin" # To use in prod
+
 # variables from command line
 input_vcf=$1
 reference=$2
@@ -55,12 +57,19 @@ basic_vep="--sift b --polyphen b --symbol --canonical"
 # options and full command line
 options="--fasta $reference --assembly $assembly --use_given_ref --offline --cache_version $version --dir_cache . $basic_vep --force_overwrite --vcf --compress_output bgzip"
 
-command="tabix -h $input_vcf {} | bgzip > {}.sharded.vcf.gz || exit 1; if [[ -e {}.sharded.vcf.gz ]] || exit 1; then if zgrep -q -v '^#' {}.sharded.vcf.gz; then vep -i {}.sharded.vcf.gz -o ${directory}{}.vep.vcf.gz $options $plugins $customs || exit 1; fi; fi; rm {}.sharded.vcf.gz || exit 1"
+
+# Split file by chromosome and then in chunk of 500k variants
+echo "Splitting files"
+bcftools index -s GAPFI8OUG3SN.vcf.gz | cut -f 1 > chromfile.txt
+vep_chunk_file="./vep_chunk_files.txt"
+command="bcftools view -O z --threads 8 -o split_by_chr.{}.vcf.gz $input_vcf {} || exit 1; python split_vcf.py -i $SCRIPT_LOCATION/split_by_chr.{}.vcf.gz -o $vep_chunk_file || exit 1; rm split_by_chr.{}.vcf.gz"
+cat chromfile.txt | xargs -P $nthreads -i bash -c "$command" || exit 1 
 
 
 # runnning VEP in parallel
 echo "Running VEP"
-cat $regionfile | xargs -P $nthreads -i bash -c "$command" || exit 1
+command="vep -i {}.vcf.gz -o ${directory}{}.vep.vcf.gz $options $plugins $customs || exit 1; rm {}.vcf.gz || exit 1"
+cat $vep_chunk_file | xargs -P $nthreads -i bash -c "$command" || exit 1
 
 # merging the results
 echo "Merging vcf.gz files"
@@ -73,17 +82,13 @@ files_sorted=""
 
 for filename in ${sorted[@]};
   do
-    if [[ $filename =~ "M" ]]; then
-      chr_M=$filename
-    else
-      #echo "Indexing file $filename"
-      #tabix -p vcf -f "$filename" || exit 1
-      files_sorted="$files_sorted$filename "
-    fi
+    #echo "Indexing file $filename"
+    #tabix -p vcf -f "$filename" || exit 1
+    files_sorted="$files_sorted$filename "
   done
 
 echo "Concatenating files: $files_sorted"
-bcftools concat -o combined.vep.vcf.gz -D -a --threads 16 -O z $files_sorted || exit 1
+bcftools concat -o combined.vep.vcf.gz --threads 24 -O z $files_sorted || exit 1
 echo "Removing temporary files"
 rm -f $files_sorted
 # echo "Sorting and indexing combined file"

@@ -214,6 +214,7 @@ def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, 
         raise Exception("Not every case ID could be found in the cohort VCF.")
         
     variant_infos = {}
+    variant_ids = []
 
     # Get VEP indexes
     # Indexes to resolve dbNSFP values by transcript
@@ -224,6 +225,7 @@ def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, 
 
     for record in vcf_obj.parse_variants():
         id = record.ID
+        variant_ids.append(id)
         # Retrieve annotations and allele counts
         try: 
             #vep_tag_value = record.get_tag_value(VEP_TAG)
@@ -298,6 +300,12 @@ def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, 
                 include_for_higlass = False
 
             variant_infos[id] = {
+                # We are adding these general infos here as well, so that we don't have to run parse_variants again later
+                "chrom": record.CHROM,
+                "pos": record.POS,
+                "ref": record.REF,
+                "alt": record.ALT,
+
                 "transcript": transcript_id,
                 "most_severe_consequence": worst_consequence,
                 "level_most_severe_consequence": impact,
@@ -446,14 +454,12 @@ def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, 
         f_out_hg.write('##fileformat=VCFv4.3\n')
         f_out_hg.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n')
 
-        for record in vcf_obj.parse_variants():
-            id = record.ID
+        for id in variant_ids:
             vi = variant_infos[id]
 
-            l = f"{record.CHROM} {record.POS} {record.ID} {record.REF} {record.ALT} {vi['regenie_test']} {vi['regenie_beta']} {vi['regenie_se']} {vi['regenie_chisq']} {vi['regenie_ml10p']} {vi['case_AF']} {vi['case_N']} {vi['control_AF']} {vi['control_N']} {vi['fisher_ml10p_control']} {vi['fisher_or_control']}  {vi['fisher_ml10p_gnomADg']} {vi['fisher_or_gnomADg']} {vi['fisher_ml10p_gnomADe2']} {vi['fisher_or_gnomADe2']} {vi['cadd_raw_rs']} {vi['cadd_phred']} {vi['polyphen_pred']} {vi['polyphen_rankscore']} {vi['polyphen_score']} {vi['gerp_score']} {vi['gerp_rankscore']} {vi['sift_rankscore']} {vi['sift_pred']} {vi['sift_score']} {vi['spliceai_score_max']}"
+            l = f"{vi['chrom']} {vi['pos']} {id} {vi['ref']} {vi['alt']} {vi['regenie_test']} {vi['regenie_beta']} {vi['regenie_se']} {vi['regenie_chisq']} {vi['regenie_ml10p']} {vi['case_AF']} {vi['case_N']} {vi['control_AF']} {vi['control_N']} {vi['fisher_ml10p_control']} {vi['fisher_or_control']}  {vi['fisher_ml10p_gnomADg']} {vi['fisher_or_gnomADg']} {vi['fisher_ml10p_gnomADe2']} {vi['fisher_or_gnomADe2']} {vi['cadd_raw_rs']} {vi['cadd_phred']} {vi['polyphen_pred']} {vi['polyphen_rankscore']} {vi['polyphen_score']} {vi['gerp_score']} {vi['gerp_rankscore']} {vi['sift_rankscore']} {vi['sift_pred']} {vi['sift_score']} {vi['spliceai_score_max']}"
             f_out.write(f"{l}\n")
             
-
             info = ""
             for field in info_list:
                 if vi[field] == 'NA':
@@ -462,7 +468,7 @@ def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, 
             info = info.strip(";")
             
             if vi["include_for_higlass"]:
-                f_out_hg.write(f"{record.CHROM}\t{record.POS}\t{record.ID}\t{record.REF}\t{record.ALT}\t0\tPASS\t{info}\n")
+                f_out_hg.write(f"{vi['chrom']}\t{vi['pos']}\t{id}\t{vi['ref']}\t{vi['alt']}\t0\tPASS\t{info}\n")
 
 
 

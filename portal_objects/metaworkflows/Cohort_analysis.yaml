@@ -315,7 +315,7 @@ workflows:
     ####################################
     config:
         instance_type:
-          - c5.4xlarge
+          - c5.2xlarge
         ebs_size: "2x"
         EBS_optimized: True
         spot_instance: False

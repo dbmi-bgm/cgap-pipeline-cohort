@@ -96,12 +96,15 @@ RUN wget https://github.com/samtools/bcftools/releases/download/1.11/bcftools-1.
     cd .. && \
     ln -s bcftools-1.11 bcftools
 
+RUN pip install granite-suite==0.2.0 click
+
 #######################################################################
 #     Scripts
 #######################################################################
 ## vep-annot
 COPY vep-annot.sh .
 RUN chmod +x vep-annot.sh
+COPY split_vcf.py .
 
 #######################################################################
 #     Setting env variables
