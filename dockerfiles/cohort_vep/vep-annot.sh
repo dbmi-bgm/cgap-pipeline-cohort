@@ -60,7 +60,7 @@ options="--fasta $reference --assembly $assembly --use_given_ref --offline --cac
 
 # Split file by chromosome and then in chunk of 500k variants
 echo "Splitting files"
-bcftools index -s GAPFI8OUG3SN.vcf.gz | cut -f 1 > chromfile.txt
+bcftools index -s $input_vcf | cut -f 1 > chromfile.txt
 vep_chunk_file="./vep_chunk_files.txt"
 command="bcftools view -O z --threads 8 -o split_by_chr.{}.vcf.gz $input_vcf {} || exit 1; python split_vcf.py -i $SCRIPT_LOCATION/split_by_chr.{}.vcf.gz -o $vep_chunk_file || exit 1; rm split_by_chr.{}.vcf.gz"
 cat chromfile.txt | xargs -P $nthreads -i bash -c "$command" || exit 1 
