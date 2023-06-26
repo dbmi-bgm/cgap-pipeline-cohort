@@ -62,7 +62,7 @@ options="--fasta $reference --assembly $assembly --use_given_ref --offline --cac
 echo "Splitting files"
 bcftools index -s $input_vcf | cut -f 1 > chromfile.txt
 vep_chunk_file="./vep_chunk_files.txt"
-command="bcftools view -O z --threads 8 -o split_by_chr.{}.vcf.gz $input_vcf {} || exit 1; python split_vcf.py -i $SCRIPT_LOCATION/split_by_chr.{}.vcf.gz -o $vep_chunk_file || exit 1; rm split_by_chr.{}.vcf.gz"
+command="bcftools view -O z --threads 8 -o split_by_chr.{}.vcf.gz $input_vcf {} || exit 1; python $SCRIPT_LOCATION/split_vcf.py -i split_by_chr.{}.vcf.gz -o $vep_chunk_file || exit 1; rm split_by_chr.{}.vcf.gz"
 cat chromfile.txt | xargs -P $nthreads -i bash -c "$command" || exit 1 
 
 
