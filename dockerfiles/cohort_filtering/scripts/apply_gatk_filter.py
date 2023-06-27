@@ -104,6 +104,10 @@ def main(annotated_vcf, out):
             v_rprs = float(record.get_tag_value("ReadPosRankSum"))
             v_sor = float(record.get_tag_value("SOR"))
 
+            # Replace * with -. VEP does not work for record.ALT=="*"
+            record.ALT = alt.replace("*", "-")
+            record.ID = id.replace("*", "-")
+
             if is_indel and (
                 v_fs < FS_INDEL
                 and v_qd > QD

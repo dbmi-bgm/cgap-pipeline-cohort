@@ -358,7 +358,7 @@ workflows:
     config:
         instance_type:
           - t3.medium
-        ebs_size: "2x"
+        ebs_size: "3x"
         EBS_optimized: True
         spot_instance: False
         run_name: run_cohort_additional_info
