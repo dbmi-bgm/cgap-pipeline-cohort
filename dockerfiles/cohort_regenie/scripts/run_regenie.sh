@@ -136,8 +136,16 @@ convert-bed-to-bw -i coverage.bed \
 
 echo ""
 echo "== Regenie step 1 =="
+
+# Exract at most 500k high-quality variants for step 1
+plink2 --bgen regenie_input.bgen --sample regenie_input.sample --maf 0.01 --mac 10 --geno 0.1 --mind 0.1 --out qc_pass --snps-only --export bgen-1.2 'bits=8'
+plink2 --bgen qc_pass.bgen --sample qc_pass.sample --thin-count 500000 --write-snplist --write-samples --no-id-header --out qc_pass_500k
+
+
 regenie --step 1 \
         --bgen regenie_input.bgen \
+        --extract qc_pass_500k.snplist \
+        --keep qc_pass_500k.id \
         --sample regenie_input.sample \
         --phenoFile regenie_input.phenotype \
         --bsize 100 \
