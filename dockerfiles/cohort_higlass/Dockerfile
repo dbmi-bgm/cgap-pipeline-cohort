@@ -47,7 +47,8 @@ COPY scripts/utils.py .
 COPY scripts/create_higlass_gene_file.py .
 COPY scripts/create_variant_result_file.py .
 # COPY scripts/run_peddy.py .
-RUN chmod +x run_regenie.sh
+COPY scripts/gather_results.sh .
+RUN chmod +x gather_results.sh
 COPY scripts/create_variant_details_file.py .
 COPY scripts/create_variant_details_file.sh .
 RUN chmod +x create_variant_details_file.sh
