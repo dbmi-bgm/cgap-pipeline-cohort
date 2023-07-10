@@ -1,8 +1,8 @@
 ## Workflow information #####################################
 #     General information for the workflow
 #############################################################
-name: cohort_regenie_fisher
-description: Run Regenie on jointly called VCF and calculate Fisher scores on variant level 
+name: cohort_regenie
+description: Run Regenie on jointly called VCF
 
 runner:
   language: cwl
@@ -22,9 +22,6 @@ input:
   annotated_vcf:
     argument_type: file.vcf_gz
 
-  gene_annotations:
-    argument_type: file.tsv_gz
-
   # Parameters
   sample_info:
     argument_type: parameter.string
@@ -38,9 +35,6 @@ input:
   high_cadd_threshold:
     argument_type: parameter.float
 
-  af_threshold_higlass:
-    argument_type: parameter.float
-
   excluded_genes:
     argument_type: parameter.string
 
@@ -50,22 +44,13 @@ input:
 output:
 
   # File output
-  variant_level_results:
+  regenie_variant_results:
     argument_type: file.txt
 
   regenie_gene_results:
     argument_type: file.txt
 
-  higlass_variant_result:
-    argument_type: file.vcf_gz
-    secondary_files:
-      - vcf_gz_tbi
+  regenie_gene_results_snplist:
+    argument_type: file.txt
 
-  higlass_gene_result:
-    argument_type: file.vcf_gz
-    secondary_files:
-      - vcf_gz_tbi
-
-  coverage:
-    argument_type: file.bigWig
 

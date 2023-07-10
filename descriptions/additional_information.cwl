@@ -26,6 +26,6 @@ outputs:
       - .tbi
 
 hints:
-  - dockerPull: ACCOUNT/cohort_regenie:VERSION #aveit/cgap-regenie:0.1.1
+  - dockerPull: ACCOUNT/cohort_higlass:VERSION
     class: DockerRequirement
 class: CommandLineTool

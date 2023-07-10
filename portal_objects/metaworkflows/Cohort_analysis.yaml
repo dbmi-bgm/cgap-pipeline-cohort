@@ -239,9 +239,72 @@ workflows:
 
 
   ## Workflow definition #####################
-  #   cohort_regenie_fisher
+  #   cohort_regenie
   ############################################
-  cohort_regenie_fisher:
+  cohort_regenie:
+
+    ## Workflow arguments ##############
+    ####################################
+    input:
+
+      # File arguments
+      annotated_vcf:
+        argument_type: file.vcf_gz
+        source: cohort_vep_annot
+        source_argument_name: annotated_vcf
+
+      sample_info:
+        argument_type: parameter.string
+
+      aaf_bin:
+        argument_type: parameter.float
+        value: "0.01"
+
+      vc_tests:
+        argument_type: parameter.string
+        value: "skato,acato-full"
+
+      high_cadd_threshold:
+        argument_type: parameter.float
+        value: "20.0"
+
+      excluded_genes:
+        argument_type: parameter.string
+        value: "none"
+
+
+    ## Output ##########################
+    ####################################
+    output:
+
+      # File output
+      regenie_variant_results:
+        file_type: Intermediate file
+        s3_lifecycle_category: no_storage
+
+      regenie_gene_results:
+        file_type: Intermediate file
+        s3_lifecycle_category: no_storage
+
+      regenie_gene_results_snplist:
+        file_type: Intermediate file
+        s3_lifecycle_category: no_storage
+      
+    ## EC2 Configuration to use ########
+    ####################################
+    config:
+        instance_type:
+          - c5.2xlarge
+        ebs_size: "2x"
+        EBS_optimized: True
+        spot_instance: False
+        run_name: run_cohort_analysis
+        behavior_on_capacity_limit: wait_and_retry
+
+## Workflow definition #####################
+  #   cohort_higlass
+  ############################################
+  cohort_higlass:
 
     ## Workflow arguments ##############
     ####################################
@@ -263,21 +326,26 @@ workflows:
         argument_type: parameter.float
         value: "0.01"
 
-      vc_tests:
-        argument_type: parameter.string
-        value: "skato,acato-full"
-
-      high_cadd_threshold:
-        argument_type: parameter.float
-        value: "20.0"
-
       af_threshold_higlass:
         argument_type: parameter.float
         value: "0.03"
 
-      excluded_genes:
-        argument_type: parameter.string
-        value: "none"
+      regenie_variant_results:
+        argument_type: file.tsv_gz
+        source: cohort_regenie
+        source_argument_name: regenie_variant_results
+
+      regenie_gene_results:
+        argument_type: file.tsv_gz
+        source: cohort_regenie
+        source_argument_name: regenie_gene_results
+
+      regenie_gene_results_snplist:
+        argument_type: file.tsv_gz
+        source: cohort_regenie
+        source_argument_name: regenie_gene_results_snplist
+
+
 
 
     ## Output ##########################
@@ -287,28 +355,25 @@ workflows:
       # File output
       variant_level_results:
         file_type: Cohort variant results
-        # linkto_location:
-        #   - SampleProcessing
-
-      regenie_gene_results:
-        file_type: Regenie gene results
+        s3_lifecycle_category: long_term_access
         # linkto_location:
         #   - SampleProcessing
 
       higlass_variant_result:
         file_type: Cohort variant results
+        s3_lifecycle_category: long_term_access
         higlass_file: True
         # linkto_location:
         #   - SampleProcessing
 
       higlass_gene_result:
         file_type: Cohort gene results
+        s3_lifecycle_category: long_term_access
         higlass_file: True
-        # linkto_location:ß
-        #   - SampleProcessing
 
       coverage:
         file_type: Cohort coverage file
+        s3_lifecycle_category: long_term_access
         higlass_file: True
       
     ## EC2 Configuration to use ########
@@ -319,9 +384,8 @@ workflows:
         ebs_size: "2x"
         EBS_optimized: True
         spot_instance: False
-        run_name: run_cohort_analysis
+        run_name: run_cohort_gather_results
         behavior_on_capacity_limit: wait_and_retry
-
 
 
   ## Workflow definition #####################
@@ -349,6 +413,7 @@ workflows:
       # File output
       variant_details:
         file_type: Cohort variant details
+        s3_lifecycle_category: long_term_access
         # linkto_location:
         #   - SampleProcessing
 

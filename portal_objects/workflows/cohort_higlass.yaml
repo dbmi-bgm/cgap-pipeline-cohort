@@ -1,0 +1,67 @@
+## Workflow information #####################################
+#     General information for the workflow
+#############################################################
+name: cohort_higlass
+description: Create Higlass and related result files
+
+runner:
+  language: cwl
+  main: workflow_higlass.cwl
+  child:
+    - higlass.cwl
+
+
+## Input information ########################################
+#     Input files and parameters
+#############################################################
+input:
+
+  # File arguments
+  annotated_vcf:
+    argument_type: file.vcf_gz
+
+  gene_annotations:
+    argument_type: file.tsv_gz
+
+  regenie_variant_results:
+    argument_type: file.tsv_gz
+
+  regenie_gene_results:
+    argument_type: file.tsv_gz
+
+  regenie_gene_results_snplist:
+    argument_type: file.tsv_gz
+
+  # Parameters
+  sample_info:
+    argument_type: parameter.string
+
+  aaf_bin:
+    argument_type: parameter.float
+
+  af_threshold_higlass:
+    argument_type: parameter.float
+
+
+## Output information #######################################
+#     Output files and quality controls
+#############################################################
+output:
+
+  # File output
+  variant_level_results:
+    argument_type: file.txt
+
+  higlass_variant_result:
+    argument_type: file.vcf_gz
+    secondary_files:
+      - vcf_gz_tbi
+
+  higlass_gene_result:
+    argument_type: file.vcf_gz
+    secondary_files:
+      - vcf_gz_tbi
+
+  coverage:
+    argument_type: file.bigWig
+
