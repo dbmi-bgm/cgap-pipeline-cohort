@@ -18,11 +18,12 @@ RUN ln -s /usr/bin/python3.8 /usr/bin/python
 
 RUN conda install -c bioconda  -c conda-forge \
     vcftools \
-    click 
-
-RUN conda install -c bioconda  -c conda-forge \
-    peddy=0.4.8 \
+    click \
     ucsc-bedgraphtobigwig
+
+# RUN conda install -c bioconda  -c conda-forge \
+#     peddy=0.4.8 \
+#     ucsc-bedgraphtobigwig
 
 RUN pip install cgap-higlass-data==0.3.0 granite-suite==0.2.0 scipy
 
@@ -45,8 +46,7 @@ ENV LC_ALL=en_US.UTF-8
 COPY scripts/utils.py .
 COPY scripts/create_higlass_gene_file.py .
 COPY scripts/create_variant_result_file.py .
-COPY scripts/run_peddy.py .
-COPY scripts/run_regenie.sh .
+# COPY scripts/run_peddy.py .
 RUN chmod +x run_regenie.sh
 COPY scripts/create_variant_details_file.py .
 COPY scripts/create_variant_details_file.sh .

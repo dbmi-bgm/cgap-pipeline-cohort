@@ -90,10 +90,6 @@ fi
 SCRIPT_LOCATION="/usr/local/bin" # To use in prod
 #SCRIPT_LOCATION="/Users/alexandervelt/Documents/GitHub/cgap-pipeline-cohort/dockerfiles/regenie/scripts" # To use locally
 
-# # Run peddy to infer the ancestry. This will be added to the sample_info json
-# echo ""
-# echo "== Run Peddy to infer ancestry =="
-# sample_info=$(python "$SCRIPT_LOCATION"/run_peddy.py -a "$annotated_vcf" -s "$sample_info" || exit 1)
 
 # STOPPING HERE FOR TESTING
 echo 'This is a test' > variant_level_results.txt.gz
