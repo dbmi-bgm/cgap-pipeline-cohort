@@ -1,5 +1,5 @@
 import click
-import csv
+import csv, gzip
 
 @click.command()
 @click.help_option("--help", "-h")
@@ -40,7 +40,7 @@ def main(regenie_output, snp_list, gene_info, aaf_bin, out):
 
     # contains information about which mask contains which SNPs
     mask_snp_list = {}
-    with open(snp_list, 'r') as f:
+    with gzip.open(snp_list, 'r') as f:
         for line in f:
 
             # Example line
@@ -96,7 +96,7 @@ def main(regenie_output, snp_list, gene_info, aaf_bin, out):
     # }
     regenie_results = {}
 
-    with open(regenie_output, 'r') as f_in:
+    with gzip.open(regenie_output, 'r') as f_in:
         
         for line in f_in:
             if line.startswith("##") or line.startswith("CHROM"):

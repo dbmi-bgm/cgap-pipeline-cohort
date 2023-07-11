@@ -22,10 +22,11 @@ RUN apt-get update && apt-get install -y libzstd-dev \
 
 RUN ln -s /usr/bin/python3.8 /usr/bin/python
 
-RUN conda install -c bioconda  -c conda-forge \
-    vcftools \
-    click \
-    ucsc-bedgraphtobigwig
+RUN conda create -n higlass -c bioconda -c conda-forge ucsc-bedgraphtobigwig vcftools click
+# RUN conda install -c bioconda  -c conda-forge \
+#     vcftools \
+#     click \
+#     ucsc-bedgraphtobigwig
 
 ## bcftools
 RUN wget https://github.com/samtools/bcftools/releases/download/1.11/bcftools-1.11.tar.bz2 && \

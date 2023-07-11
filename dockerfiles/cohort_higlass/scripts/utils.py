@@ -1,5 +1,6 @@
 from granite.lib.shared_functions import *
 import json
+import gzip
 
 VALID_GENOTYPES = ["./.", "0/0", "1/0", "0/1", "1/1" , "0|0", "1|0", "0|1", "1|1"]
 
@@ -212,7 +213,7 @@ def parse_regenie_results(regenie_output):
         "LOG10P": 12,
         "EXTRA": 13,
     }
-    with open(regenie_output, 'r') as f_in:
+    with gzip.open(regenie_output, 'r') as f_in:
         for line in f_in:
             if line.startswith("##") or line.startswith("CHROM"):
                 continue
