@@ -12,7 +12,13 @@ RUN apt-get update && apt-get install -y libzstd-dev \
     locales \
     tabix \
     gzip \
-    less
+    less \
+    autoconf \
+    libssl-dev \
+    libbz2-dev \
+    pkg-config \
+    liblzma-dev
+
 
 RUN ln -s /usr/bin/python3.8 /usr/bin/python
 
