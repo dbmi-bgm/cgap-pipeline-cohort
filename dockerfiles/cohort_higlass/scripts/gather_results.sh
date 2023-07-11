@@ -111,10 +111,12 @@ create-coverage-bed -i "$annotated_vcf" \
                   -a hg38 \
                   -q False || exit 1
 
+conda activate ucsc
 convert-bed-to-bw -i coverage.bed \
                   -o coverage.bw \
                   -a hg38 \
                   -l 0 || exit 1
+conda activate base
 
 
 

@@ -213,7 +213,7 @@ def parse_regenie_results(regenie_output):
         "LOG10P": 12,
         "EXTRA": 13,
     }
-    with gzip.open(regenie_output, 'r') as f_in:
+    with gzip.open(regenie_output, 'rt') as f_in:
         for line in f_in:
             if line.startswith("##") or line.startswith("CHROM"):
                 continue
