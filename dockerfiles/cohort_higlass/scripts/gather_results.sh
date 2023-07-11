@@ -134,16 +134,20 @@ echo "== Create multilevel version of the Higlass VCF =="
 # This needs "pip install cgap-higlass-data"
 # Skip sorting for now. It should already be sorted
 #cat higlass_variant_tests.vcf | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > higlass_variant_tests.sorted.vcf
-create-cohort-vcf -i higlass_variant_tests.vcf.gz \
-                  -o higlass_variant_tests.multires.vcf \
-                  -c fisher_ml10p_control \
-                  -q True || exit 1
-cat higlass_variant_tests.multires.vcf | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > higlass_variant_tests.multires.sorted.vcf || exit 1
-rm -f higlass_variant_tests.multires.vcf
-bgzip -c higlass_variant_tests.multires.sorted.vcf > higlass_variant_tests.multires.vcf.gz || exit 1
-rm -f higlass_variant_tests.multires.sorted.vcf
-tabix -p vcf higlass_variant_tests.multires.vcf.gz || exit 1
 
+# Output will be compressed and indexed
+create-cohort-vcf -i higlass_variant_tests.vcf.gz \
+                  -o higlass_variant_tests.multires.vcf.gz \
+                  -c fisher_ml10p_control \
+                  -q True \
+                  -t True \ 
+                  -w True || exit 1
+
+# cat higlass_variant_tests.multires.vcf | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > higlass_variant_tests.multires.sorted.vcf || exit 1
+# rm -f higlass_variant_tests.multires.vcf
+# bgzip -c higlass_variant_tests.multires.sorted.vcf > higlass_variant_tests.multires.vcf.gz || exit 1
+# rm -f higlass_variant_tests.multires.sorted.vcf
+# tabix -p vcf higlass_variant_tests.multires.vcf.gz || exit 1
 
 
 echo ""

@@ -21,11 +21,21 @@ RUN conda install -c bioconda  -c conda-forge \
     click \
     ucsc-bedgraphtobigwig
 
+## bcftools
+RUN wget https://github.com/samtools/bcftools/releases/download/1.11/bcftools-1.11.tar.bz2 && \
+    tar -xjf bcftools-1.11.tar.bz2 && \
+    rm -rf bcftools-1.11.tar.bz2 && \
+    cd bcftools-1.11 && \
+    ./configure && \
+    make && \
+    cd .. && \
+    ln -s bcftools-1.11 bcftools
+
 # RUN conda install -c bioconda  -c conda-forge \
 #     peddy=0.4.8 \
 #     ucsc-bedgraphtobigwig
 
-RUN pip install cgap-higlass-data==0.3.0 granite-suite==0.2.0 scipy
+RUN pip install cgap-higlass-data==0.4.0 granite-suite==0.2.0 scipy
 
 RUN conda clean -a -y -f
 
