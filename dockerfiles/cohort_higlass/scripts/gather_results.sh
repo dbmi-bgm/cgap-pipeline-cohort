@@ -13,9 +13,12 @@ printHelpAndExit() {
     echo "-a AAF_BIN : specifies the AAF upper bound used to generate burden masks"
     echo "-r AF_THRESHOLD_HIGLASS : AF threshold for rare variants that are included in Higlass (e.g. 0.03)"
     echo "-g GENE_ANNOTATIONS : gene annotation file from portal"
+    echo "-b REGENIE_VARIANT_RESULTS : Regenie output"
+    echo "-c REGENIE_GENE_RESULTS : Regenie output"
+    echo "-d REGENIE_GENE_RESULTS_SNPLIST : Regenie output"
     exit "$1"
 }
-while getopts "v:s:g:a:b:c:r:e:" opt; do
+while getopts "v:s:g:a:r:b:c:d:" opt; do
     case $opt in
         v) annotated_vcf="$OPTARG"
            annotated_vcf_tbi="$OPTARG.tbi"
