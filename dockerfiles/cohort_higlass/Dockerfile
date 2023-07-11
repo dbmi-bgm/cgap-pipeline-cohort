@@ -42,7 +42,7 @@ RUN wget https://github.com/samtools/bcftools/releases/download/1.11/bcftools-1.
 #     peddy=0.4.8 \
 #     ucsc-bedgraphtobigwig
 
-RUN pip install cgap-higlass-data==0.4.0 granite-suite==0.2.0 scipy
+RUN conda activate higlass && pip install cgap-higlass-data==0.4.0 granite-suite==0.2.0 scipy
 
 RUN conda clean -a -y -f
 
