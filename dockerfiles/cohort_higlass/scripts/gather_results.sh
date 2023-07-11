@@ -95,13 +95,13 @@ SCRIPT_LOCATION="/usr/local/bin" # To use in prod
 
 
 # STOPPING HERE FOR TESTING
-echo 'This is a test' > variant_level_results.txt.gz
-echo 'This is a test' > higlass_variant_tests.multires.vcf.gz
-echo 'This is a test' > higlass_variant_tests.multires.vcf.gz.tbi
-echo 'This is a test' > higlass_gene_tests.sorted.vcf.gz
-echo 'This is a test' > higlass_gene_tests.sorted.vcf.gz.tbi
-echo 'This is a test' > coverage.bw
-exit 0
+# echo 'This is a test' > variant_level_results.txt.gz
+# echo 'This is a test' > higlass_variant_tests.multires.vcf.gz
+# echo 'This is a test' > higlass_variant_tests.multires.vcf.gz.tbi
+# echo 'This is a test' > higlass_gene_tests.sorted.vcf.gz
+# echo 'This is a test' > higlass_gene_tests.sorted.vcf.gz.tbi
+# echo 'This is a test' > coverage.bw
+# exit 0
 
 echo ""
 echo "== Create coverage bigWig file =="
