@@ -33,7 +33,6 @@ echo "Sample info: $sample_info"
 echo ""
 echo "============================="
 
-conda activate higlass
 
 if [ -z "$annotated_vcf" ]
 then
