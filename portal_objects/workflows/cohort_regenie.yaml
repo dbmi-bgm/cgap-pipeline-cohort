@@ -45,12 +45,12 @@ output:
 
   # File output
   regenie_variant_results:
-    argument_type: file.txt
+    argument_type: file.tsv_gz
 
   regenie_gene_results:
-    argument_type: file.txt
+    argument_type: file.tsv_gz
 
   regenie_gene_results_snplist:
-    argument_type: file.txt
+    argument_type: file.tsv_gz
 
 

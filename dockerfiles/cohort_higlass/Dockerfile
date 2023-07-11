@@ -51,6 +51,7 @@ RUN conda clean -a -y -f
 #     Setting env variables
 #######################################################################
 
+ENV PATH=/usr/local/bin/bcftools/:$PATH
 ## Supporting UTF-8
 RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"
 ENV LC_ALL=en_US.UTF-8
