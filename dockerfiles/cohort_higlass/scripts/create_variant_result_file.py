@@ -229,12 +229,12 @@ def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, 
     ]
 
     # Write headers of result files
-    f_out = gzip.open(out, 'w')
+    f_out = gzip.open(out, 'wt')
     header = get_variant_result_file_header()
     f_out.write(header)
     f_out.close()
 
-    f_out_hg = gzip.open(higlass_vcf, 'w')
+    f_out_hg = gzip.open(higlass_vcf, 'wt')
     header_hg = get_variant_result_higlass_file_header()
     f_out_hg.write(header_hg)
     f_out_hg.close()
@@ -247,12 +247,12 @@ def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, 
     for record in vcf_obj.parse_variants():
         num_variants += 1
         if num_variants % NUM_VARIANTS_TO_PROCESS == 0:
-            f_out = gzip.open(out, 'a')
+            f_out = gzip.open(out, 'at')
             f_out.write(result_file_content)
             f_out.close()
             result_file_content = ""
 
-            f_out_hg = gzip.open(higlass_vcf, 'a')
+            f_out_hg = gzip.open(higlass_vcf, 'at')
             f_out_hg.write(result_hg_file_content)
             f_out_hg.close()
             result_hg_file_content = ""
