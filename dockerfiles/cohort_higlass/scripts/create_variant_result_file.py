@@ -149,9 +149,9 @@ def fisher_exact_gnomAD(case_AC, case_AN, gnomAD_AC, gnomAD_AN):
 @click.option("-r", "--regenie-output", required=True, type=str, help="Regenie output file")
 @click.option("-a", "--annotated-vcf", required=True, type=str, help="Annotated, jointly called VCF")
 @click.option("-s", "--sample-info", required=True, type=str, help="JSON string with sample info")
-@click.option("-o", "--out", required=True, type=str, help="the output file name of the variant level results")
+@click.option("-o", "--out", required=True, type=str, help="the output file name of the variant level results (gzipped)")
 @click.option("-f", "--af-threshold-higlass", required=True, type=str, help="Rare variant AF threshold for variants to include in Higlass")
-@click.option("-e", "--higlass-vcf", required=True, type=str, help="Higlass VCF file containing the results")
+@click.option("-e", "--higlass-vcf", required=True, type=str, help="Output Higlass VCF file containing the results (gzipped)")
 def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, higlass_vcf):
     """This script takes a variant-based regenie output file and adds Fisher exact test results.
        It also produces a Higlass compatible VCF with some annotations
@@ -378,11 +378,11 @@ def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, 
                 "fisher_or_control": fisher_or_control,
                 "fisher_ml10p_control": fisher_ml10p_control,
 
-                "regenie_ml10p" : regenie_results[id]["regenie_ml10p"],
-                "regenie_beta" : regenie_results[id]["regenie_beta"],
-                "regenie_chisq" : regenie_results[id]["regenie_chisq"],
-                "regenie_se" : regenie_results[id]["regenie_se"],
-                "regenie_test": regenie_results[id]["regenie_test"],
+                "regenie_ml10p" : regenie_results[id]["regenie_ml10p"] if id in regenie_results else "",
+                "regenie_beta" : regenie_results[id]["regenie_beta"] if id in regenie_results else "",
+                "regenie_chisq" : regenie_results[id]["regenie_chisq"] if id in regenie_results else "",
+                "regenie_se" : regenie_results[id]["regenie_se"] if id in regenie_results else "",
+                "regenie_test": regenie_results[id]["regenie_test"] if id in regenie_results else "",
 
                 "include_for_higlass": include_for_higlass
             }
@@ -392,7 +392,7 @@ def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, 
                 if vi[key] == '':
                     vi[key] = 'NA'
 
-            result_file_content += f"{vi['chrom']} {vi['pos']} {id} {vi['ref']} {vi['alt']} {vi['regenie_test']} {vi['regenie_beta']} {vi['regenie_se']} {vi['regenie_chisq']} {vi['regenie_ml10p']} {vi['case_AF']} {vi['case_N']} {vi['control_AF']} {vi['control_N']} {vi['fisher_ml10p_control']} {vi['fisher_or_control']}  {vi['fisher_ml10p_gnomADg']} {vi['fisher_or_gnomADg']} {vi['fisher_ml10p_gnomADe2']} {vi['fisher_or_gnomADe2']} {vi['cadd_raw_rs']} {vi['cadd_phred']} {vi['polyphen_pred']} {vi['polyphen_rankscore']} {vi['polyphen_score']} {vi['gerp_score']} {vi['gerp_rankscore']} {vi['sift_rankscore']} {vi['sift_pred']} {vi['sift_score']} {vi['spliceai_score_max']}"
+            result_file_content += f"{vi['chrom']} {vi['pos']} {id} {vi['ref']} {vi['alt']} {vi['regenie_test']} {vi['regenie_beta']} {vi['regenie_se']} {vi['regenie_chisq']} {vi['regenie_ml10p']} {vi['case_AF']} {vi['case_N']} {vi['control_AF']} {vi['control_N']} {vi['fisher_ml10p_control']} {vi['fisher_or_control']}  {vi['fisher_ml10p_gnomADg']} {vi['fisher_or_gnomADg']} {vi['fisher_ml10p_gnomADe2']} {vi['fisher_or_gnomADe2']} {vi['cadd_raw_rs']} {vi['cadd_phred']} {vi['polyphen_pred']} {vi['polyphen_rankscore']} {vi['polyphen_score']} {vi['gerp_score']} {vi['gerp_rankscore']} {vi['sift_rankscore']} {vi['sift_pred']} {vi['sift_score']} {vi['spliceai_score_max']}\n"
 
             info = ""
             for field in info_list:
@@ -407,6 +407,16 @@ def main(regenie_output, annotated_vcf, sample_info, out, af_threshold_higlass, 
         except Exception: 
             raise ValueError('\nERROR processing variant_infos for variant {0}\n'.format(id))
 
+
+    f_out = gzip.open(out, 'at')
+    f_out.write(result_file_content)
+    f_out.close()
+    result_file_content = ""
+
+    f_out_hg = gzip.open(higlass_vcf, 'at')
+    f_out_hg.write(result_hg_file_content)
+    f_out_hg.close()
+    result_hg_file_content = ""
 
 
 
