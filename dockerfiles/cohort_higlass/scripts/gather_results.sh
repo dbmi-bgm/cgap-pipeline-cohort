@@ -143,7 +143,7 @@ create-cohort-vcf -i higlass_variant_tests.vcf.gz \
                   -o higlass_variant_tests.multires.vcf.gz \
                   -c fisher_ml10p_control \
                   -q True \
-                  -t True \ 
+                  -t True \
                   -w True || exit 1
 
 # cat higlass_variant_tests.multires.vcf | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > higlass_variant_tests.multires.sorted.vcf || exit 1
