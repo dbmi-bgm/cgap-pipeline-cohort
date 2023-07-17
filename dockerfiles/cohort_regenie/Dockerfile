@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y libzstd-dev \
 RUN ln -s /usr/bin/python3.8 /usr/bin/python
 
 RUN conda install -c bioconda  -c conda-forge \
-    regenie=3.2.5 \
+    regenie=3.2.7 \
     plink2 \
     vcftools \
     bgenix \

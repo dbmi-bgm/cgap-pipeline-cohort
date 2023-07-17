@@ -118,6 +118,7 @@ regenie --step 1 \
         --phenoFile regenie_input.phenotype \
         --bsize 100 \
         --bt \
+        --lowmem \
         --out regenie_result_step1 || exit 1
 
 
