@@ -53,6 +53,8 @@ def main(annotated_vcf, high_cadd_threshold):
             worst_transcript_ = worst_transcript.split('|')
             worst_consequence = get_worst_consequence(worst_transcript_[idx_consequence])
             gene_symbol = worst_transcript_[idx_gene]
+            if not gene_symbol: #skip intergeneic variants
+                continue
             is_missense = worst_consequence == "missense_variant"
             is_nonsense = worst_consequence == "stop_gained"
             is_essential_splice = (worst_consequence == "splice_acceptor_variant") or (worst_consequence == "splice_donor_variant")

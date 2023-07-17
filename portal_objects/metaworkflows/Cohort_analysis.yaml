@@ -296,8 +296,8 @@ workflows:
     ####################################
     config:
         instance_type:
-          - c5.2xlarge
-        ebs_size: "2x"
+          - m5.2xlarge
+        ebs_size: "3x"
         EBS_optimized: True
         spot_instance: False
         run_name: run_cohort_analysis
