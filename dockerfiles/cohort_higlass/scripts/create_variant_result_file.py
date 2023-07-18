@@ -95,8 +95,8 @@ def fisher_calculation(proband_alt, proband_ref, gnomAD_alt, gnomAD_ref):
     '''
     oddsratio, pvalue = fisher_exact([[proband_alt, proband_ref], [gnomAD_alt, gnomAD_ref]], alternative='greater')
     oddsratio_rounded = round(oddsratio, ROUND_DIGITS)
-    print(proband_alt, proband_ref, gnomAD_alt, gnomAD_ref, pvalue)
-    minuslog10p = 0 if pvalue == 1 else round(-math.log10(pvalue), ROUND_DIGITS)
+    #print(proband_alt, proband_ref, gnomAD_alt, gnomAD_ref, pvalue)
+    minuslog10p = 0 if pvalue == 0 else round(-math.log10(pvalue), ROUND_DIGITS)
     return pvalue, oddsratio_rounded, minuslog10p
 
 def fisher_exact_gnomAD(case_AC, case_AN, gnomAD_AC, gnomAD_AN):
