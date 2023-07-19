@@ -95,15 +95,6 @@ SCRIPT_LOCATION="/usr/local/bin" # To use in prod
 #SCRIPT_LOCATION="/Users/alexandervelt/Documents/GitHub/cgap-pipeline-cohort/dockerfiles/regenie/scripts" # To use locally
 
 
-# STOPPING HERE FOR TESTING
-# echo 'This is a test' > variant_level_results.txt.gz
-# echo 'This is a test' > higlass_variant_tests.multires.vcf.gz
-# echo 'This is a test' > higlass_variant_tests.multires.vcf.gz.tbi
-# echo 'This is a test' > higlass_gene_tests.sorted.vcf.gz
-# echo 'This is a test' > higlass_gene_tests.sorted.vcf.gz.tbi
-# echo 'This is a test' > coverage.bw
-# exit 0
-
 echo ""
 echo "== Create coverage bigWig file =="
 create-coverage-bed -i "$annotated_vcf" \
@@ -145,12 +136,6 @@ create-cohort-vcf -i higlass_variant_tests.vcf.gz \
                   -q True \
                   -t True \
                   -w True || exit 1
-
-# cat higlass_variant_tests.multires.vcf | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > higlass_variant_tests.multires.sorted.vcf || exit 1
-# rm -f higlass_variant_tests.multires.vcf
-# bgzip -c higlass_variant_tests.multires.sorted.vcf > higlass_variant_tests.multires.vcf.gz || exit 1
-# rm -f higlass_variant_tests.multires.sorted.vcf
-# tabix -p vcf higlass_variant_tests.multires.vcf.gz || exit 1
 
 
 echo ""
