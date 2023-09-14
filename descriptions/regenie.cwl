@@ -17,69 +17,41 @@ inputs:
     inputBinding:
       prefix: -s
       position: 2
-  gene_annotations:
-    type: File
-    inputBinding:
-      prefix: -g
-      position: 3
   aaf_bin:
     type: float
     inputBinding:
       prefix: -a
-      position: 4
+      position: 3
   vc_tests:
     type: string
     inputBinding:
       prefix: -b
-      position: 5
+      position: 4
   high_cadd_threshold:
     type: float
     inputBinding:
       prefix: -c
-      position: 6
-  af_threshold_higlass:
-    type: float
-    inputBinding:
-      prefix: -r
-      position: 7
+      position: 5
   excluded_genes:
     type: string
     inputBinding:
       prefix: -e
-      position: 8
+      position: 6
 outputs:
-  variant_level_results:
+  regenie_variant_results:
     type: File
     outputBinding:
-      glob: variant_level_results.txt
+      glob: regenie_result_variant_Y1.txt.gz
   regenie_gene_results:
     type: File
     outputBinding:
-      glob: regenie_result_step2_gene_Y1.regenie
-  higlass_variant_result:
+      glob: regenie_result_gene_Y1.txt.gz
+  regenie_gene_results_snplist:
     type: File
     outputBinding:
-      glob: higlass_variant_tests.multires.vcf.gz
-    secondaryFiles:
-      - .tbi
-  higlass_gene_result:
-    type: File
-    outputBinding:
-      glob: higlass_gene_tests.sorted.vcf.gz
-    secondaryFiles:
-      - .tbi
-  annotated_vcf_filtered:
-    type: File
-    outputBinding:
-      glob:   annotated_vcf_filtered.vcf.gz
-    secondaryFiles:
-      - .tbi
-  coverage:
-    type: File
-    outputBinding:
-      glob: coverage.bw
+      glob: regenie_result_gene_masks.snplist.gz
 
 hints:
-  - dockerPull: ACCOUNT/regenie:VERSION #aveit/cgap-regenie:0.1.1
+  - dockerPull: ACCOUNT/cohort_regenie:VERSION #aveit/cgap-regenie:0.1.1
     class: DockerRequirement
 class: CommandLineTool

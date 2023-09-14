@@ -1,0 +1,56 @@
+## Workflow information #####################################
+#     General information for the workflow
+#############################################################
+name: cohort_regenie
+description: Run Regenie on jointly called VCF
+
+runner:
+  language: cwl
+  main: workflow_regenie.cwl
+  child:
+    - regenie.cwl
+
+software:
+  - regenie@3.2.5
+
+## Input information ########################################
+#     Input files and parameters
+#############################################################
+input:
+
+  # File arguments
+  annotated_vcf:
+    argument_type: file.vcf_gz
+
+  # Parameters
+  sample_info:
+    argument_type: parameter.string
+
+  aaf_bin:
+    argument_type: parameter.float
+
+  vc_tests:
+    argument_type: parameter.string
+
+  high_cadd_threshold:
+    argument_type: parameter.float
+
+  excluded_genes:
+    argument_type: parameter.string
+
+## Output information #######################################
+#     Output files and quality controls
+#############################################################
+output:
+
+  # File output
+  regenie_variant_results:
+    argument_type: file.tsv_gz
+
+  regenie_gene_results:
+    argument_type: file.tsv_gz
+
+  regenie_gene_results_snplist:
+    argument_type: file.tsv_gz
+
+

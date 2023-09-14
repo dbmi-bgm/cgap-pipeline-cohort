@@ -55,7 +55,7 @@ foreach my $pop (sort keys %pops) {
 
 	print "Processing population: $pop (" , scalar(@{$pops{$pop}}) , " inds)", "\n";
 
-	my $ouput = `vcftools --vcf $vcffile --keep $indfile --hardy --out $pop 2>&1`;
+	my $ouput = `vcftools --gzvcf $vcffile --keep $indfile --hardy --out $pop 2>&1`;
 
 	open(HWEI, "<", $pop . '.hwe') or die $!;
 
@@ -71,7 +71,7 @@ foreach my $pop (sort keys %pops) {
 
 }
 
-open(HWEO, ">", 'exclude.hwe') or die $!;
+open(HWEO, ">", 'tmp.exclude.hwe') or die $!;
 foreach my $snp (keys %exclude_count) {
 	my ($locus, $site) = split('-', $snp);
 	if ($exclude_count{$snp} / scalar(keys %pops) > $cutoff) {
@@ -80,19 +80,20 @@ foreach my $snp (keys %exclude_count) {
 }
 close HWEO;
 
-my $output = `vcftools --vcf $vcffile --exclude-positions exclude.hwe --recode --recode-INFO-all --out $outfile 2>&1`;
-my $filt_output = `vcftools --vcf $vcffile --positions exclude.hwe --hardy --out filtered 2>&1`;
+my $output = `vcftools --gzvcf $vcffile --exclude-positions tmp.exclude.hwe --recode --recode-INFO-all --stdout | gzip -c > $outfile`;
+#my $output = `vcftools --gzvcf $vcffile --exclude-positions exclude.hwe --recode --recode-INFO-all --out $outfile 2>&1`;
+my $filt_output = `vcftools --gzvcf $vcffile --positions tmp.exclude.hwe --hardy --out tmp.filtered 2>&1`;
 
 print "Outputting results of HWE test for filtered loci to 'filtered.hwe'\n";
 
-my $kept;
+my $removed;
 my $total;
-if ($output =~ /kept (\d+) out of a possible (\d+) Sites/) {
-	$kept = $1;
+if ($filt_output =~ /kept (\d+) out of a possible (\d+) Sites/) {
+	$removed = $1;
 	$total = $2;
 }
 
-print "Kept $kept of a possible $total loci (filtered " , $total - $kept , ' loci)', "\n";
+print "Kept ",$total - $removed, " of a possible $total loci (removed " , $removed , ' loci)', "\n";
 
 __END__
 
@@ -105,7 +106,7 @@ filter_hwe_by_pop.pl
 filter_hwe_by_pop.pl -v <vcffile> -p <popmap> [options]
 
 Options:
-     -v     <vcffile>	input vcf file
+     -v     <vcffile>	input vcf file (gzipped)
      -p		<popmap>	tab-separated file of samples and population designations
 	 -h		[hwe]	minimum Hardy-Weinberg p-value cutoff for SNPs
 	 -c		[cutoff]	proportion of all populations that a locus can be below HWE cutoff without being filtered

@@ -11,7 +11,7 @@ description: Perform cohort analysis using Regenie
 input:
 
   # File arguments
-  annotated_vcf:
+  joint_called_vcf:
     argument_type: file.vcf_gz
     dimensionality: 1
 
@@ -35,20 +35,75 @@ input:
   #  {...}
   # ]
 
+  reference_fa:
+    argument_type: file.fa
+    files:
+      - complete-reference-fasta@hg38
+
+  regions:
+    argument_type: file.txt
+    files:
+      - 10Mb-genomic-regions@hg38
+
+  vep:
+    argument_type: file.vep_tar
+    files:
+      - vep@101b
+
+  dbnsfp:
+    argument_type: file.dbnsfp_gz
+    files:
+      - dbnsfp@4.1a
+
+  spliceai_snv:
+    argument_type: file.vcf_gz
+    files:
+      - spliceai-snv@1.3
+
+  spliceai_indel:
+    argument_type: file.vcf_gz
+    files:
+      - spliceai-indel@1.3
+
+  gnomad:
+    argument_type: file.vcf_gz
+    files:
+      - gnomad-genome@3.1
+
+  gnomad2:
+    argument_type: file.vcf_gz
+    files:
+      - gnomad-exome@2.1.1
+
+  CADD_snv:
+    argument_type: file.tsv_gz
+    files:
+      - cadd-snv@1.6
+
+  CADD_indel:
+    argument_type: file.tsv_gz
+    files:
+      - cadd-indel@1.6
+
   aaf_bin:
     argument_type: parameter.float
+    value: "0.01"
 
   vc_tests:
     argument_type: parameter.string
+    value: "skato,acato-full"
 
   high_cadd_threshold:
     argument_type: parameter.float
+    value: "20.0"
 
   af_threshold_higlass:
     argument_type: parameter.float
+    value: "0.03"
 
   excluded_genes:
     argument_type: parameter.string
+    value: "none"
   
 
 
@@ -59,9 +114,136 @@ input:
 workflows:
 
   ## Workflow definition #####################
-  #   regenie_fisher
+  #   cohort_filtering
   ############################################
-  regenie_fisher:
+  cohort_filtering:
+
+    ## Workflow arguments ##############
+    ####################################
+    input:
+
+      # File arguments
+      joint_called_vcf:
+        argument_type: file.vcf_gz
+        input_dimension: 1
+
+      reference:
+        argument_type: file.fa
+        source_argument_name: reference_fa
+
+      sample_info:
+        argument_type: parameter.string
+
+
+    ## Output ##########################
+    ####################################
+    output:
+
+      # File output
+      joint_called_vcf_filtered:
+        file_type: Intermediate file
+        s3_lifecycle_category: no_storage
+
+      
+    ## EC2 Configuration to use ########
+    ####################################
+    config:
+        instance_type:
+          - c5.xlarge
+        ebs_size: "5x"
+        EBS_optimized: True
+        spot_instance: False
+        run_name: run_cohort_filtering
+        behavior_on_capacity_limit: wait_and_retry
+
+
+  ## Workflow definition #####################
+  #   cohort_vep_annot
+  ############################################
+  cohort_vep_annot:
+
+    ## Specific arguments ##############
+    ####################################
+    input:
+
+      # File argument
+      input_vcf:
+        argument_type: file.vcf_gz
+        source: cohort_filtering
+        source_argument_name: joint_called_vcf_filtered
+
+      reference:
+        argument_type: file.fa
+        source_argument_name: reference_fa
+
+      regions:
+        argument_type: file.txt
+
+      vep:
+        argument_type: file.vep_tar
+
+      dbnsfp:
+        argument_type: file.dbnsfp_gz
+
+      spliceai_snv:
+        argument_type: file.vcf_gz
+
+      spliceai_indel:
+        argument_type: file.vcf_gz
+
+      gnomad:
+        argument_type: file.vcf_gz
+
+      gnomad2:
+        argument_type: file.vcf_gz
+
+      CADD_snv:
+        argument_type: file.tsv_gz
+
+      CADD_indel:
+        argument_type: file.tsv_gz
+
+      # Parameter argument
+      nthreads:
+        argument_type: parameter.integer
+        value: "72"
+
+    ## Output ##########################
+    ####################################
+    output:
+
+      # File output
+      annotated_vcf:
+        file_type: annotated VCF
+        description: output from VEP in VCF format
+        s3_lifecycle_category: long_term_archive
+
+    ## EC2 Configuration to use ########
+    ####################################
+    config:
+      instance_type:
+        - c5n.18xlarge
+        - c5n.9xlarge
+        - c5.18xlarge
+        - c5.12xlarge
+        - c5a.16xlarge
+        - m5.16xlarge
+        - m5a.16xlarge
+        - m6i.16xlarge
+        - m6a.16xlarge
+        - c6i.16xlarge
+        - c6a.16xlarge
+      ebs_size: "1.40x"
+      EBS_optimized: True
+      spot_instance: False
+      run_name: run_cohort_vep_annot
+      behavior_on_capacity_limit: wait_and_retry
+
+
+  ## Workflow definition #####################
+  #   cohort_regenie
+  ############################################
+  cohort_regenie:
 
     ## Workflow arguments ##############
     ####################################
@@ -70,10 +252,8 @@ workflows:
       # File arguments
       annotated_vcf:
         argument_type: file.vcf_gz
-        input_dimension: 1
-
-      gene_annotations:
-        argument_type: file.tsv_gz
+        source: cohort_vep_annot
+        source_argument_name: annotated_vcf
 
       sample_info:
         argument_type: parameter.string
@@ -90,12 +270,84 @@ workflows:
         argument_type: parameter.float
         value: "20.0"
 
+      excluded_genes:
+        argument_type: parameter.string
+        value: "none"
+
+
+    ## Output ##########################
+    ####################################
+    output:
+
+      # File output
+      regenie_variant_results:
+        file_type: Intermediate file
+        s3_lifecycle_category: no_storage
+
+      regenie_gene_results:
+        file_type: Intermediate file
+        s3_lifecycle_category: no_storage
+
+      regenie_gene_results_snplist:
+        file_type: Intermediate file
+        s3_lifecycle_category: no_storage
+      
+    ## EC2 Configuration to use ########
+    ####################################
+    config:
+        instance_type:
+          - m5.2xlarge
+        ebs_size: "3x"
+        EBS_optimized: True
+        spot_instance: False
+        run_name: run_cohort_analysis
+        behavior_on_capacity_limit: wait_and_retry
+
+## Workflow definition #####################
+  #   cohort_higlass
+  ############################################
+  cohort_higlass:
+
+    ## Workflow arguments ##############
+    ####################################
+    input:
+
+      # File arguments
+      annotated_vcf:
+        argument_type: file.vcf_gz
+        source: cohort_vep_annot
+        source_argument_name: annotated_vcf
+
+      gene_annotations:
+        argument_type: file.tsv_gz
+
+      sample_info:
+        argument_type: parameter.string
+
+      aaf_bin:
+        argument_type: parameter.float
+        value: "0.01"
+
       af_threshold_higlass:
         argument_type: parameter.float
         value: "0.03"
 
-      excluded_genes:
-        argument_type: parameter.string
+      regenie_variant_results:
+        argument_type: file.tsv_gz
+        source: cohort_regenie
+        source_argument_name: regenie_variant_results
+
+      regenie_gene_results:
+        argument_type: file.tsv_gz
+        source: cohort_regenie
+        source_argument_name: regenie_gene_results
+
+      regenie_gene_results_snplist:
+        argument_type: file.tsv_gz
+        source: cohort_regenie
+        source_argument_name: regenie_gene_results_snplist
+
+
 
 
     ## Output ##########################
@@ -105,44 +357,37 @@ workflows:
       # File output
       variant_level_results:
         file_type: Cohort variant results
-        # linkto_location:
-        #   - SampleProcessing
-
-      regenie_gene_results:
-        file_type: Regenie gene results
+        s3_lifecycle_category: long_term_access
         # linkto_location:
         #   - SampleProcessing
 
       higlass_variant_result:
         file_type: Cohort variant results
+        s3_lifecycle_category: long_term_access
         higlass_file: True
         # linkto_location:
         #   - SampleProcessing
 
       higlass_gene_result:
         file_type: Cohort gene results
+        s3_lifecycle_category: long_term_access
         higlass_file: True
-        # linkto_location:
-        #   - SampleProcessing
-
-      annotated_vcf_filtered:
-        file_type: Intermediate file
 
       coverage:
         file_type: Cohort coverage file
+        s3_lifecycle_category: long_term_access
         higlass_file: True
       
     ## EC2 Configuration to use ########
     ####################################
     config:
         instance_type:
-          - c5.2xlarge
-        ebs_size: 30
+          - m5.2xlarge
+        ebs_size: "2x"
         EBS_optimized: True
         spot_instance: False
-        run_name: run_cohort_analysis
+        run_name: run_cohort_gather_results
         behavior_on_capacity_limit: wait_and_retry
-
 
 
   ## Workflow definition #####################
@@ -157,8 +402,8 @@ workflows:
       # File arguments
       annotated_vcf:
         argument_type: file.vcf_gz
-        source: regenie_fisher
-        source_argument_name: annotated_vcf_filtered
+        source: cohort_vep_annot
+        source_argument_name: annotated_vcf
 
       sample_info:
         argument_type: parameter.string
@@ -170,6 +415,7 @@ workflows:
       # File output
       variant_details:
         file_type: Cohort variant details
+        s3_lifecycle_category: long_term_access
         # linkto_location:
         #   - SampleProcessing
 
@@ -178,8 +424,8 @@ workflows:
     ####################################
     config:
         instance_type:
-          - t3.medium
-        ebs_size: 30
+          - t3.large
+        ebs_size: "3x"
         EBS_optimized: True
         spot_instance: False
         run_name: run_cohort_additional_info

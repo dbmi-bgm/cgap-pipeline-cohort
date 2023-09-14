@@ -1,0 +1,70 @@
+## Workflow information #####################################
+#     General information for the workflow
+#############################################################
+name: cohort_vep_annot
+description: Split multiallelic variants. |
+             Run VEP to annotate input VCF file.
+
+runner:
+  language: cwl
+  main: workflow_cohort_vep_annot.cwl
+  child:
+    - vep_annot.cwl
+
+software:
+  - BCFtools@1.11
+
+## Input information ########################################
+#     Input files and parameters
+#############################################################
+input:
+
+  # File argument
+  input_vcf:
+    argument_type: file.vcf_gz
+
+  reference:
+    argument_type: file.fa
+
+  regions:
+    argument_type: file.txt
+
+  vep:
+    argument_type: file.vep_tar
+
+  dbnsfp:
+    argument_type: file.dbnsfp_gz
+
+  spliceai_snv:
+    argument_type: file.vcf_gz
+
+  spliceai_indel:
+    argument_type: file.vcf_gz
+
+  gnomad:
+    argument_type: file.vcf_gz
+
+  gnomad2:
+    argument_type: file.vcf_gz
+
+  CADD_snv:
+    argument_type: file.tsv_gz
+
+  CADD_indel:
+    argument_type: file.tsv_gz
+
+  # Parameter argument
+  nthreads:
+    argument_type: parameter.integer
+
+## Output information #######################################
+#     Output files and quality controls
+#############################################################
+output:
+
+  # File output
+  annotated_vcf:
+    argument_type: file.vcf_gz
+    secondary_files:
+      - vcf_gz_tbi
+

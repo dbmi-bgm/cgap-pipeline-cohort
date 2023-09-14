@@ -1,14 +1,14 @@
 #!/usr/bin/env cwl-runner
 
 cwlVersion: v1.0
-baseCommand: create_variant_details_file.sh
+baseCommand: run_filtering.sh
 requirements:
   InlineJavascriptRequirement: {}
 inputs:
-  annotated_vcf:
+  joint_called_vcf:
     type: File
     inputBinding:
-      prefix: -a
+      prefix: -v
       position: 1
     secondaryFiles:
       - .tbi
@@ -18,14 +18,13 @@ inputs:
       prefix: -s
       position: 2
 outputs:
-  variant_details:
+  joint_called_vcf_filtered:
     type: File
     outputBinding:
-      glob: variant_details.vcf.gz
+      glob: joint_called_vcf_filtered.vcf.gz
     secondaryFiles:
       - .tbi
-
 hints:
-  - dockerPull: ACCOUNT/cohort_higlass:VERSION
+  - dockerPull: ACCOUNT/cohort_filtering:VERSION
     class: DockerRequirement
 class: CommandLineTool

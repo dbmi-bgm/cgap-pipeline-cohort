@@ -33,6 +33,7 @@ echo "Sample info: $sample_info"
 echo ""
 echo "============================="
 
+
 if [ -z "$annotated_vcf" ]
 then
     echoerr "Annotated VCF missing"
@@ -54,11 +55,7 @@ SCRIPT_LOCATION="/usr/local/bin" # To use in prod
 
 echo ""
 echo "== Create the file =="
-python "$SCRIPT_LOCATION"/create_variant_details_file.py -a "$annotated_vcf" -s "$sample_info" -o variant_details.vcf || exit 1
-
-bgzip -c variant_details.vcf > variant_details.vcf.gz || exit 1
-tabix -p vcf variant_details.vcf.gz || exit 1
-
+python "$SCRIPT_LOCATION"/create_variant_details_file.py -a "$annotated_vcf" -s "$sample_info" -o variant_details.vcf.gz || exit 1
 
 echo ""
 echo "== DONE =="

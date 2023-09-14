@@ -1,0 +1,45 @@
+## Workflow information #####################################
+#     General information for the workflow
+#############################################################
+name: cohort_filtering
+description: Run the filtering step prior for the cohort analysis
+
+runner:
+  language: cwl
+  main: workflow_filtering.cwl
+  child:
+    - split_multiallelics.cwl
+    - filtering.cwl
+
+software:
+  - BCFtools@1.11
+
+## Input information ########################################
+#     Input files and parameters
+#############################################################
+input:
+
+  # File arguments
+  joint_called_vcf:
+    argument_type: file.vcf_gz
+
+  reference:
+    argument_type: file.fa
+
+  # Parameters
+  sample_info:
+    argument_type: parameter.string
+
+
+## Output information #######################################
+#     Output files and quality controls
+#############################################################
+output:
+
+  # File output
+  joint_called_vcf_filtered:
+    argument_type: file.vcf_gz
+    secondary_files:
+      - vcf_gz_tbi
+    
+
